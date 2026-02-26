@@ -1,0 +1,37 @@
+.history-list-panel {
+  .ant-card-head {
+    min-height: 40px;
+  }
+
+  .ant-card-head-title {
+    font-size: 14px;
+  }
+}
+
+.history-list-items {
+  max-height: 240px;
+  overflow: auto;
+
+  .ant-list-item {
+    padding: 8px 2px;
+  }
+}
+
+.history-item-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.history-item-time {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+}
+
+.history-item-message {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+}

@@ -1,0 +1,21 @@
+.daemon-panel {
+  .ant-card-head {
+    min-height: 40px;
+  }
+
+  .ant-card-head-title {
+    font-size: 14px;
+  }
+}
+
+.daemon-panel-header {
+  margin-bottom: 8px;
+}
+
+.daemon-panel-metrics {
+  margin-bottom: 10px;
+}
+
+.daemon-panel-actions {
+  display: flex;
+}

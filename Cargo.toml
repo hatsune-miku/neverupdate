@@ -1,0 +1,13 @@
+[workspace]
+members = [
+  "core",
+  "daemon",
+  "panel/src-tauri",
+]
+resolver = "2"
+
+[profile.release]
+opt-level = "z"
+lto = true
+panic = "abort"
+strip = true

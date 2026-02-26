@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+
+    /** 使参数不写类型时，默认any */
+    "noImplicitAny": false,
+    "strict": false,
+
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": false,
+    "strictNullChecks": false,
+    "noUnusedLocals": true,
+    "noUnusedParameters": false,
+
+    /** 允许在 switch 里面 fallthrough */
+    "noFallthroughCasesInSwitch": false,
+
+    "noImplicitReturns": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "experimentalDecorators": true
+  }
+}

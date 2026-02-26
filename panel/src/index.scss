@@ -1,0 +1,24 @@
+@use './styles/colors';
+
+:root {
+  font-family: 'Segoe UI Variable Text', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  color: var(--nu-text-strong);
+  line-height: 1.45;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+}
+
+button,
+input {
+  font: inherit;
+}

@@ -1,0 +1,15 @@
+{
+  "name": "neverupdate",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --cwd panel tauri dev",
+    "build": "bun run --cwd panel tauri build",
+    "build:daemon": "cargo build -p nu_daemon --release",
+    "build:core": "cargo build -p nu_core --release"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "~2.9.6"
+  }
+}

@@ -1,0 +1,30 @@
+# Rust
+/target/
+**/*.rs.bk
+
+# Node/Bun
+/node_modules/
+**/node_modules/
+/dist/
+**/dist/
+/dist-tauri/
+**/dist-tauri/
+
+# Tauri
+panel/src-tauri/target/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+bun-debug.log*
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# Local agent cache
+.claude/

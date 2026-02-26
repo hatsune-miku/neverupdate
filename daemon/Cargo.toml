@@ -1,0 +1,13 @@
+[package]
+name = "nu_daemon"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "neverupdate-daemon"
+path = "src/main.rs"
+
+[dependencies]
+nu_core = { path = "../core" }
+pico-args = "0.5"
+serde_json = "1.0"

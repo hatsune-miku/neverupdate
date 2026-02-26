@@ -1,0 +1,75 @@
+.nu-preflight-route,
+.nu-shell {
+  min-height: 100vh;
+  padding: 24px;
+  color: var(--nu-text-primary);
+  background:
+    radial-gradient(circle at 12% 8%, var(--nu-bg-glow-blue), transparent 34%), radial-gradient(circle at 88% 88%, var(--nu-bg-glow-orange), transparent 34%),
+    linear-gradient(135deg, var(--nu-bg-gradient-start) 0%, var(--nu-bg-gradient-mid) 52%, var(--nu-bg-gradient-end) 100%);
+}
+
+.nu-preflight-route {
+  display: grid;
+  place-items: center;
+}
+
+.nu-preflight-card {
+  width: min(980px, 100%);
+}
+
+.nu-preflight-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.nu-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 2px;
+}
+
+.nu-tabs {
+  min-width: 240px;
+
+  .ant-tabs-nav {
+    margin: 0;
+  }
+}
+
+.nu-toolbar-meta {
+  align-items: center;
+}
+
+.nu-clickable-tag {
+  cursor: pointer;
+}
+
+.nu-error-bar {
+  margin-top: 8px;
+}
+
+.nu-content-guards,
+.nu-content-daemon {
+  margin-top: 10px;
+  display: grid;
+  gap: 10px;
+}
+
+@media (max-width: 900px) {
+  .nu-preflight-route,
+  .nu-shell {
+    padding: 10px;
+  }
+
+  .nu-toolbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .nu-tabs {
+    width: 100%;
+  }
+}

@@ -1,0 +1,38 @@
+:root {
+  --nu-color-primary: #2f9a71;
+  --nu-color-primary-soft: rgba(33, 118, 78, 0.28);
+
+  --nu-text-primary: #1f2942;
+  --nu-text-strong: #182238;
+  --nu-text-muted: #6f7890;
+  --nu-text-soft: #46526b;
+
+  --nu-bg-gradient-start: #f6f9ff;
+  --nu-bg-gradient-mid: #f9f4ee;
+  --nu-bg-gradient-end: #eef8f2;
+  --nu-bg-glow-blue: rgba(168, 202, 236, 0.24);
+  --nu-bg-glow-orange: rgba(236, 184, 150, 0.2);
+
+  --nu-border-default: rgba(31, 47, 71, 0.15);
+  --nu-border-release: rgba(113, 99, 73, 0.24);
+  --nu-border-danger: rgba(173, 57, 51, 0.28);
+
+  --nu-surface-card: rgba(255, 255, 255, 0.7);
+  --nu-surface-risk: rgba(255, 255, 255, 0.86);
+  --nu-surface-risk-background-start: #fcf6ef;
+  --nu-surface-risk-background-end: #f4efeb;
+  --nu-surface-risk-glow-red: rgba(175, 44, 31, 0.1);
+  --nu-surface-risk-glow-blue: rgba(15, 54, 93, 0.12);
+  --nu-surface-risk-border: rgba(49, 35, 28, 0.15);
+  --nu-surface-risk-shadow: rgba(32, 24, 20, 0.18);
+  --nu-surface-risk-text: #3a2f2b;
+  --nu-surface-extreme-start: rgba(255, 247, 244, 0.65);
+  --nu-surface-extreme-end: rgba(255, 238, 233, 0.5);
+
+  --nu-ok-bg: rgba(246, 255, 251, 0.8);
+  --nu-bad-bg: rgba(255, 245, 244, 0.8);
+
+  --nu-button-gradient-start: #bf4e34;
+  --nu-button-gradient-end: #7b3527;
+  --nu-button-text: #fefcfb;
+}

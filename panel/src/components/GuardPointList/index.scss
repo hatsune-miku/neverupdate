@@ -1,0 +1,61 @@
+.guard-point-list {
+  margin: 0;
+}
+
+.guard-point-card {
+  height: 100%;
+  border-color: var(--nu-border-default);
+
+  .ant-card-body {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px;
+  }
+
+  &.guarded {
+    border-color: var(--nu-color-primary-soft);
+  }
+
+  &.released {
+    border-color: var(--nu-border-release);
+  }
+
+  &.extreme {
+    .ant-card-body {
+      background: linear-gradient(140deg, var(--nu-surface-extreme-start) 0%, var(--nu-surface-extreme-end) 100%);
+      border-radius: 10px;
+    }
+  }
+}
+
+.guard-point-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+
+  .ant-typography {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
+.guard-point-description {
+  margin: 0;
+  color: var(--nu-text-soft);
+  font-size: 12px;
+}
+
+.guard-point-message {
+  margin: 0;
+  flex: 1;
+  min-height: 34px;
+  color: var(--nu-text-muted);
+  font-size: 11px;
+}
+
+.guard-point-actions {
+  margin-top: auto;
+}
