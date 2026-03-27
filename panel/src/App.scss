@@ -1,75 +1,122 @@
-.nu-preflight-route,
-.nu-shell {
-  min-height: 100vh;
-  padding: 24px;
-  color: var(--nu-text-primary);
-  background:
-    radial-gradient(circle at 12% 8%, var(--nu-bg-glow-blue), transparent 34%), radial-gradient(circle at 88% 88%, var(--nu-bg-glow-orange), transparent 34%),
-    linear-gradient(135deg, var(--nu-bg-gradient-start) 0%, var(--nu-bg-gradient-mid) 52%, var(--nu-bg-gradient-end) 100%);
-}
-
-.nu-preflight-route {
-  display: grid;
-  place-items: center;
-}
-
-.nu-preflight-card {
-  width: min(980px, 100%);
-}
-
-.nu-preflight-actions {
+.nu-cmd {
+  position: relative;
+  height: 100vh;
   display: flex;
-  justify-content: flex-end;
-  margin-top: 10px;
+  flex-direction: column;
+  padding: 20px 24px;
+  gap: 14px;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 18% 8%, rgba(212, 137, 158, 0.06) 0%, transparent 45%), radial-gradient(ellipse at 82% 92%, rgba(232, 176, 192, 0.06) 0%, transparent 45%), var(--nu-kinu);
+  animation: cmd-enter 500ms var(--nu-ease) both;
 }
 
-.nu-toolbar {
+.nu-cmd-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 10px;
-  padding-bottom: 2px;
+  flex-shrink: 0;
 }
 
-.nu-tabs {
-  min-width: 240px;
+.nu-cmd-brand {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--nu-sumi);
 
-  .ant-tabs-nav {
-    margin: 0;
+  .nu-cmd-brand-emoticon {
+    font-family: 'Roboto';
   }
 }
 
-.nu-toolbar-meta {
+.nu-cmd-toolbar {
+  display: flex;
   align-items: center;
+  gap: 8px;
 }
 
-.nu-clickable-tag {
+.nu-cmd-badge,
+.nu-cmd-badge-passive {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  min-height: 36px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--nu-border-strong);
+  background: var(--nu-yuki);
+  color: var(--nu-sumi-soft);
+}
+
+.nu-cmd-badge {
   cursor: pointer;
+  transition:
+    border-color 200ms var(--nu-ease),
+    background-color 200ms var(--nu-ease),
+    color 200ms var(--nu-ease);
+
+  &:hover {
+    border-color: var(--nu-pink-soft);
+    background: var(--nu-pink-soft);
+    color: var(--nu-pink-deep);
+  }
 }
 
-.nu-error-bar {
-  margin-top: 8px;
+.nu-cmd-error {
+  flex-shrink: 0;
+  padding: 10px 16px;
+  border: 1px solid var(--nu-kurenai-soft);
+  border-radius: 14px;
+  background: var(--nu-kurenai-soft);
+  color: var(--nu-kurenai);
+  font-size: 13px;
+  animation: fade-slide-down 300ms var(--nu-ease);
 }
 
-.nu-content-guards,
-.nu-content-daemon {
-  margin-top: 10px;
+.nu-cmd-body {
+  flex: 1;
   display: grid;
-  gap: 10px;
+  grid-template-columns: 1fr 340px;
+  gap: 14px;
+  min-height: 0;
 }
 
-@media (max-width: 900px) {
-  .nu-preflight-route,
-  .nu-shell {
-    padding: 10px;
-  }
+.nu-cmd-main {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
 
-  .nu-toolbar {
-    flex-direction: column;
-    align-items: flex-start;
+  &::-webkit-scrollbar {
+    display: none;
   }
+}
 
-  .nu-tabs {
-    width: 100%;
+.nu-cmd-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+@keyframes cmd-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

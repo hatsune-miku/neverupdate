@@ -1,0 +1,133 @@
+.tl {
+  background: var(--nu-yuki);
+  border: 1px solid var(--nu-border-default);
+  border-radius: 18px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  box-shadow: var(--nu-shadow-sm);
+}
+
+.tl-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+
+  h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--nu-sumi);
+  }
+}
+
+.tl-count {
+  min-width: 24px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--nu-sumi-mute);
+  background: var(--nu-suna);
+}
+
+.tl-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.tl-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--nu-sumi-mute);
+}
+
+.tl-entry {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 10px;
+}
+
+.tl-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 5px;
+}
+
+.tl-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  &.ok {
+    background: var(--nu-pink);
+  }
+
+  &.fail {
+    background: var(--nu-kurenai);
+  }
+}
+
+.tl-line {
+  flex: 1;
+  width: 1px;
+  margin: 4px 0;
+  background: var(--nu-border-default);
+}
+
+.tl-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 14px;
+}
+
+.tl-content-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  strong {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--nu-sumi);
+  }
+}
+
+.tl-action-tag {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 8px;
+  border-radius: 999px;
+
+  &.ok {
+    color: var(--nu-pink-deep);
+    background: var(--nu-pink-soft);
+  }
+
+  &.fail {
+    color: var(--nu-kurenai);
+    background: var(--nu-kurenai-soft);
+  }
+}
+
+.tl-msg {
+  font-size: 12px;
+  color: var(--nu-sumi-soft);
+}
+
+.tl-time {
+  font-size: 11px;
+  color: var(--nu-sumi-mute);
+}

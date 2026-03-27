@@ -1,9 +1,8 @@
 @use './styles/colors';
-
 :root {
-  font-family: 'Segoe UI Variable Text', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  color: var(--nu-text-strong);
-  line-height: 1.45;
+  color: var(--nu-sumi);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
 }
 
 * {
@@ -15,10 +14,101 @@ body,
 #root {
   margin: 0;
   width: 100%;
-  min-height: 100%;
+  height: 100%;
+}
+
+body {
+  background: var(--nu-kinu);
+  overflow: hidden;
 }
 
 button,
 input {
   font: inherit;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--nu-sumi-faint);
+  border-radius: 3px;
+
+  &:hover {
+    background: var(--nu-sumi-mute);
+  }
+}
+
+.nu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  min-height: 36px;
+  padding: 0 20px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 220ms var(--nu-ease),
+    background-color 220ms var(--nu-ease),
+    border-color 220ms var(--nu-ease),
+    box-shadow 220ms var(--nu-ease),
+    color 220ms var(--nu-ease);
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  &:not(:disabled):hover {
+    transform: translateY(-1px);
+  }
+
+  &:not(:disabled):active {
+    transform: translateY(0);
+  }
+}
+
+.nu-btn-primary {
+  border: none;
+  color: var(--nu-yuki);
+  background: linear-gradient(135deg, var(--nu-pink) 0%, var(--nu-pink-deep) 100%);
+
+  &:not(:disabled):hover {
+    box-shadow: 0 4px 16px var(--nu-pink-glow);
+  }
+}
+
+.nu-btn-ghost {
+  border-color: var(--nu-border-strong);
+  color: var(--nu-sumi-soft);
+  background: var(--nu-yuki);
+
+  &:not(:disabled):hover {
+    border-color: var(--nu-pink-soft);
+    color: var(--nu-sumi);
+    background: var(--nu-shiro);
+  }
+}
+
+.nu-btn-danger {
+  border-color: var(--nu-kurenai-soft);
+  color: var(--nu-kurenai);
+  background: var(--nu-kurenai-soft);
+
+  &:not(:disabled):hover {
+    background: rgba(196, 92, 92, 0.16);
+    box-shadow: 0 4px 16px var(--nu-kurenai-glow);
+  }
+}
+
+.nu-mono {
+  font-family: 'JetBrains Mono', monospace;
 }

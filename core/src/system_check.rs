@@ -137,7 +137,7 @@ pub fn run_preflight_checks() -> PreflightReport {
     let b_single_instance = acquire_global_instance("Global\\NeverUpdatePreflightProbe").is_ok();
     checks.push(PreflightCheck {
         id: String::from("single_instance_probe"),
-        title: String::from("单实例能力可用"),
+        title: String::from("没有重复运行"),
         passed: b_single_instance,
         detail: if b_single_instance {
             String::from("mutex available")

@@ -1,0 +1,198 @@
+.diag-screen {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(ellipse at 25% 15%, rgba(232, 176, 192, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 75% 85%, rgba(212, 137, 158, 0.05) 0%, transparent 50%),
+    linear-gradient(160deg, #faf5ee 0%, #f5efe5 100%);
+  animation: diag-fade 500ms var(--nu-ease) both;
+}
+
+.diag-card {
+  width: min(700px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 36px 32px;
+  border-radius: 24px;
+  background: var(--nu-yuki);
+  border: 1px solid var(--nu-border-default);
+  box-shadow:
+    0 4px 24px rgba(80, 70, 58, 0.06),
+    0 16px 48px rgba(80, 70, 58, 0.08);
+  animation: diag-rise 500ms var(--nu-ease) 100ms both;
+
+  h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--nu-sumi);
+  }
+}
+
+.diag-subtitle {
+  margin: 8px 0 0;
+  font-size: 14px;
+  color: var(--nu-sumi-mute);
+}
+
+.diag-loading-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin: 32px 0;
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: var(--nu-sumi-mute);
+  }
+}
+
+.diag-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--nu-suna);
+  border-top-color: var(--nu-pink);
+  border-radius: 50%;
+  animation: spin 800ms linear infinite;
+}
+
+.diag-badge-row {
+  margin-top: 20px;
+}
+
+.diag-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+
+  &.ok {
+    color: var(--nu-pink-deep);
+    background: var(--nu-pink-soft);
+  }
+
+  &.fail {
+    color: var(--nu-kurenai);
+    background: var(--nu-kurenai-soft);
+  }
+}
+
+.diag-grid {
+  width: 100%;
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.diag-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--nu-border-default);
+  background: var(--nu-shiro);
+  transition: border-color 200ms var(--nu-ease);
+
+  &.ok {
+    border-color: rgba(212, 137, 158, 0.15);
+
+    .diag-icon {
+      color: var(--nu-pink);
+    }
+  }
+
+  &.fail {
+    border-color: rgba(196, 92, 92, 0.18);
+    background: rgba(196, 92, 92, 0.03);
+
+    .diag-icon {
+      color: var(--nu-kurenai);
+    }
+  }
+}
+
+.diag-icon {
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.diag-item-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.diag-item-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--nu-sumi);
+}
+
+.diag-item-detail {
+  font-size: 12px;
+  color: var(--nu-sumi-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.diag-warning {
+  margin: 16px 0 0;
+  font-size: 13px;
+  color: var(--nu-kurenai);
+  text-align: center;
+}
+
+.diag-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+@keyframes diag-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes diag-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 600px) {
+  .diag-grid {
+    grid-template-columns: 1fr;
+  }
+}

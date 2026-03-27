@@ -1,38 +1,38 @@
 :root {
-  --nu-color-primary: #2f9a71;
-  --nu-color-primary-soft: rgba(33, 118, 78, 0.28);
+  --nu-kinu: #faf5ee;
+  --nu-shiro: #fff9f3;
+  --nu-yuki: #ffffff;
+  --nu-suna: #f0ebe2;
 
-  --nu-text-primary: #1f2942;
-  --nu-text-strong: #182238;
-  --nu-text-muted: #6f7890;
-  --nu-text-soft: #46526b;
+  --nu-pink: #d4899e;
+  --nu-pink-deep: #b86e83;
+  --nu-pink-soft: rgba(212, 137, 158, 0.13);
+  --nu-pink-glow: rgba(212, 137, 158, 0.22);
 
-  --nu-bg-gradient-start: #f6f9ff;
-  --nu-bg-gradient-mid: #f9f4ee;
-  --nu-bg-gradient-end: #eef8f2;
-  --nu-bg-glow-blue: rgba(168, 202, 236, 0.24);
-  --nu-bg-glow-orange: rgba(236, 184, 150, 0.2);
+  --nu-sakura: #e8b0c0;
+  --nu-sakura-soft: rgba(232, 176, 192, 0.15);
 
-  --nu-border-default: rgba(31, 47, 71, 0.15);
-  --nu-border-release: rgba(113, 99, 73, 0.24);
-  --nu-border-danger: rgba(173, 57, 51, 0.28);
+  --nu-kurenai: #c45c5c;
+  --nu-kurenai-soft: rgba(196, 92, 92, 0.1);
+  --nu-kurenai-glow: rgba(196, 92, 92, 0.18);
 
-  --nu-surface-card: rgba(255, 255, 255, 0.7);
-  --nu-surface-risk: rgba(255, 255, 255, 0.86);
-  --nu-surface-risk-background-start: #fcf6ef;
-  --nu-surface-risk-background-end: #f4efeb;
-  --nu-surface-risk-glow-red: rgba(175, 44, 31, 0.1);
-  --nu-surface-risk-glow-blue: rgba(15, 54, 93, 0.12);
-  --nu-surface-risk-border: rgba(49, 35, 28, 0.15);
-  --nu-surface-risk-shadow: rgba(32, 24, 20, 0.18);
-  --nu-surface-risk-text: #3a2f2b;
-  --nu-surface-extreme-start: rgba(255, 247, 244, 0.65);
-  --nu-surface-extreme-end: rgba(255, 238, 233, 0.5);
+  --nu-kohaku: #c49a5c;
+  --nu-kohaku-soft: rgba(196, 154, 92, 0.12);
 
-  --nu-ok-bg: rgba(246, 255, 251, 0.8);
-  --nu-bad-bg: rgba(255, 245, 244, 0.8);
+  --nu-sora: #6b98b8;
+  --nu-sora-soft: rgba(107, 152, 184, 0.1);
 
-  --nu-button-gradient-start: #bf4e34;
-  --nu-button-gradient-end: #7b3527;
-  --nu-button-text: #fefcfb;
+  --nu-sumi: #3a3530;
+  --nu-sumi-soft: #6b6460;
+  --nu-sumi-mute: #a09890;
+  --nu-sumi-faint: #c8c0b8;
+
+  --nu-border-default: rgba(58, 53, 48, 0.08);
+  --nu-border-strong: rgba(58, 53, 48, 0.15);
+
+  --nu-shadow-sm: 0 2px 8px rgba(80, 70, 58, 0.06);
+  --nu-shadow-md: 0 6px 20px rgba(80, 70, 58, 0.08);
+  --nu-shadow-lg: 0 14px 40px rgba(80, 70, 58, 0.1);
+
+  --nu-ease: cubic-bezier(0.29, 0, 0, 1);
 }

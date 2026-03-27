@@ -1,20 +1,16 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 
-import { Alert, Button, Card, Space, Tabs, Tag } from 'antd'
-
-import { DaemonPanel } from '@/components/DaemonPanel'
-import { GuardPointList } from '@/components/GuardPointList'
-import { HistoryList } from '@/components/HistoryList'
-import { PreflightList } from '@/components/PreflightList'
-import { RiskNotice } from '@/components/RiskNotice'
+import { DaemonControl } from '@/components/DaemonControl'
+import { Diagnostics } from '@/components/Diagnostics'
+import { GuardMatrix } from '@/components/GuardMatrix'
+import { RiskGate } from '@/components/RiskGate'
+import { StatusHero } from '@/components/StatusHero'
+import { Timeline } from '@/components/Timeline'
 import { useAppStore } from '@/store'
 
 import './App.scss'
 
 const EXTREME_POINT_ID = 'extreme_mode'
-
-const TabsValues = ['guards', 'daemon'] as const
-type Tab = (typeof TabsValues)[number]
 
 export default function App() {
   const {
@@ -39,9 +35,7 @@ export default function App() {
     runExtremeMode,
   } = useAppStore()
 
-  const [activeTab, setActiveTab] = useState<Tab>('guards')
-  const [enteredConsole, setEnteredConsole] = useState(false)
-  const preflightPassed = preflight?.passed === true
+  const preflightOk = preflight?.passed === true
 
   useEffect(
     function () {
@@ -50,123 +44,45 @@ export default function App() {
     [bootstrap],
   )
 
-  useEffect(
+  const breachedCount = useMemo(
     function () {
-      if (enteredConsole && !preflightPassed) {
-        setEnteredConsole(false)
-      }
+      return statuses.filter(function (s) {
+        return s.breached
+      }).length
     },
-    [enteredConsole, preflightPassed],
+    [statuses],
   )
 
-  const tabItems = useMemo(function () {
-    return [
-      {
-        key: 'guards',
-        label: '阻断点',
-      },
-      {
-        key: 'daemon',
-        label: 'Daemon 进程',
-      },
-    ]
-  }, [])
-
   if (!riskAccepted) {
-    return <RiskNotice onAccept={acceptRisk} />
+    return <RiskGate onAccept={acceptRisk} />
   }
 
-  if (!enteredConsole) {
-    return (
-      <main className="nu-preflight-route">
-        <Card className="nu-preflight-card" bordered={false}>
-          <PreflightList preflight={preflight} />
-
-          <Space className="nu-preflight-actions" size={8}>
-            <Button loading={busy || loading} onClick={refresh}>
-              刷新检查
-            </Button>
-            <Button
-              type="primary"
-              disabled={loading || !preflightPassed}
-              onClick={function () {
-                if (preflightPassed) {
-                  setEnteredConsole(true)
-                }
-              }}
-            >
-              进入控制台
-            </Button>
-          </Space>
-        </Card>
-      </main>
-    )
+  if (!preflightOk) {
+    return <Diagnostics preflight={preflight} busy={busy} loading={loading} onRefresh={refresh} />
   }
 
   return (
-    <main className="nu-shell">
-      <header className="nu-toolbar">
-        <Tabs
-          activeKey={activeTab}
-          className="nu-tabs"
-          items={tabItems}
-          size="small"
-          onChange={function (nextKey) {
-            if (nextKey === 'guards' || nextKey === 'daemon') {
-              setActiveTab(nextKey)
-            }
-          }}
-        />
-
-        <Space className="nu-toolbar-meta" size={6}>
-          <Tag
-            className="nu-clickable-tag"
-            color={preflight?.passed ? 'success' : 'error'}
-            onClick={function () {
-              setEnteredConsole(false)
-            }}
-          >
-            {preflight?.passed ? '前置检查通过' : '前置检查异常'}
-          </Tag>
-          <Tag color={daemonSnapshot?.runtime.running ? 'success' : 'default'}>{daemonSnapshot?.runtime.running ? '守护运行中' : '守护未运行'}</Tag>
-        </Space>
+    <main className="nu-cmd">
+      <header className="nu-cmd-header">
+        <h1 className="nu-cmd-brand">
+          NeverUpdate&nbsp;<span className="nu-cmd-brand-emoticon">(˶˃ ᵕ ˂˶)</span>
+        </h1>
+        <div className="nu-cmd-toolbar">
+          <span className="nu-cmd-badge-passive">前置已通过</span>
+          <span className="nu-cmd-badge-passive">{daemonSnapshot?.runtime.running ? '守护运行中' : '守护未运行'}</span>
+          <button className="nu-btn nu-btn-ghost" disabled={busy || loading} type="button" onClick={refresh}>
+            刷新数据
+          </button>
+        </div>
       </header>
 
-      {lastError ? <Alert className="nu-error-bar" message={lastError} showIcon type="error" /> : null}
+      {lastError ? <div className="nu-cmd-error">{lastError}</div> : null}
 
-      {activeTab === 'guards' ? (
-        <section className="nu-content-guards">
-          <Space className="nu-guard-actions" size={8} wrap>
-            <Button loading={busy || loading} onClick={refresh}>
-              刷新
-            </Button>
-            <Button
-              disabled={busy || loading}
-              onClick={function () {
-                executeAll('guard')
-              }}
-            >
-              一键阻断
-            </Button>
-            <Button
-              disabled={busy || loading}
-              onClick={function () {
-                executeAll('release')
-              }}
-            >
-              一键放开
-            </Button>
-            <Button
-              disabled={busy || loading}
-              onClick={function () {
-                executeAll('repair')
-              }}
-            >
-              一键修复
-            </Button>
-          </Space>
+      <StatusHero loading={loading} busy={busy} preflight={preflight} statuses={statuses} daemonSnapshot={daemonSnapshot} onExecuteAll={executeAll} />
 
-          <GuardPointList
+      <div className="nu-cmd-body">
+        <section className="nu-cmd-main">
+          <GuardMatrix
             busy={busy || loading}
             points={points}
             statuses={statuses}
@@ -175,20 +91,13 @@ export default function App() {
                 runExtremeMode()
                 return
               }
-
               executePoint(pointId, action)
             }}
           />
         </section>
-      ) : (
-        <section className="nu-content-daemon">
-          <Space className="nu-daemon-actions-row" size={8} wrap>
-            <Button loading={busy || loading} onClick={refresh}>
-              刷新
-            </Button>
-          </Space>
 
-          <DaemonPanel
+        <aside className="nu-cmd-aside">
+          <DaemonControl
             busy={busy || loading}
             snapshot={daemonSnapshot}
             onRegisterOrReregister={reregisterService}
@@ -197,15 +106,13 @@ export default function App() {
                 stopService()
                 return
               }
-
               startService()
             }}
             onUnregister={unregisterService}
           />
-
-          <HistoryList history={history} />
-        </section>
-      )}
+          <Timeline history={history} />
+        </aside>
+      </div>
     </main>
   )
 }

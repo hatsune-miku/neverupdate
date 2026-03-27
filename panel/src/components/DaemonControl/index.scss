@@ -1,0 +1,79 @@
+.daemon-ctrl {
+  background: var(--nu-yuki);
+  border: 1px solid var(--nu-border-default);
+  border-radius: 18px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: var(--nu-shadow-sm);
+}
+
+.daemon-ctrl-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--nu-sumi);
+  }
+}
+
+.daemon-ctrl-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+
+  &.active {
+    color: var(--nu-pink-deep);
+  }
+
+  &.idle {
+    color: var(--nu-sumi-mute);
+  }
+}
+
+.daemon-ctrl-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+
+  .active & {
+    box-shadow: 0 0 6px var(--nu-pink-glow);
+  }
+}
+
+.daemon-ctrl-info {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+
+  dt {
+    font-size: 11px;
+    color: var(--nu-sumi-mute);
+  }
+
+  dd {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: var(--nu-sumi);
+  }
+}
+
+.daemon-ctrl-actions {
+  display: flex;
+  gap: 8px;
+
+  .nu-btn {
+    flex: 1;
+    min-height: 32px;
+    font-size: 12px;
+  }
+}
