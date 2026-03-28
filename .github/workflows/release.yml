@@ -42,7 +42,7 @@ jobs:
 
       - name: Install panel dependencies
         working-directory: panel
-        run: bun install --frozen-lockfile
+        run: bun install
 
       - name: Build daemon (neverupdate-daemon)
         run: cargo build -p nu_daemon --release
