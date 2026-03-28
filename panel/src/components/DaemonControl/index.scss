@@ -6,7 +6,6 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  box-shadow: var(--nu-shadow-sm);
 }
 
 .daemon-ctrl-header {
@@ -43,10 +42,6 @@
   height: 7px;
   border-radius: 50%;
   background: currentColor;
-
-  .active & {
-    box-shadow: 0 0 6px var(--nu-pink-glow);
-  }
 }
 
 .daemon-ctrl-info {

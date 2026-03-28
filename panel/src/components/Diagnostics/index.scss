@@ -5,10 +5,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background:
-    radial-gradient(ellipse at 25% 15%, rgba(232, 176, 192, 0.06) 0%, transparent 50%),
-    radial-gradient(ellipse at 75% 85%, rgba(212, 137, 158, 0.05) 0%, transparent 50%),
-    linear-gradient(160deg, #faf5ee 0%, #f5efe5 100%);
+  background: var(--nu-kinu);
   animation: diag-fade 500ms var(--nu-ease) both;
 }
 
@@ -21,9 +18,6 @@
   border-radius: 24px;
   background: var(--nu-yuki);
   border: 1px solid var(--nu-border-default);
-  box-shadow:
-    0 4px 24px rgba(80, 70, 58, 0.06),
-    0 16px 48px rgba(80, 70, 58, 0.08);
   animation: diag-rise 500ms var(--nu-ease) 100ms both;
 
   h1 {
@@ -102,6 +96,7 @@
   border-radius: 14px;
   border: 1px solid var(--nu-border-default);
   background: var(--nu-shiro);
+  overflow: hidden;
   transition: border-color 200ms var(--nu-ease);
 
   &.ok {
@@ -142,6 +137,9 @@
   font-size: 13px;
   font-weight: 700;
   color: var(--nu-sumi);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .diag-item-detail {

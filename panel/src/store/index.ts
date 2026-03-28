@@ -1,4 +1,6 @@
 import { create } from 'zustand'
+import { check } from '@tauri-apps/plugin-updater'
+import { relaunch } from '@tauri-apps/plugin-process'
 
 import { bridge } from '@/bridge'
 import type { DaemonSnapshot, GuardAction, GuardPointDefinition, GuardPointStatus, GuardSummary, HistoryEntry, InterceptionEntry, PreflightReport } from '@/types'
@@ -15,6 +17,11 @@ interface AppState {
   history: HistoryEntry[]
   interceptions: InterceptionEntry[]
   daemonSnapshot: DaemonSnapshot | null
+  updateAvailable: Awaited<ReturnType<typeof check>>
+  updateStatus: 'idle' | 'checking' | 'ready' | 'latest' | 'downloading' | 'error'
+  updateMessage: string
+  updateDownloaded: number
+  updateTotal: number | null
 
   bootstrap: () => Promise<void>
   acceptRisk: () => void
@@ -30,6 +37,8 @@ interface AppState {
 
   runExtremeMode: () => Promise<void>
   clearHistory: () => Promise<void>
+  checkForUpdates: () => Promise<void>
+  installUpdate: () => Promise<void>
 }
 
 const RISK_KEY = 'neverupdate-risk-accepted'
@@ -58,6 +67,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   history: [],
   interceptions: [],
   daemonSnapshot: null,
+  updateAvailable: null,
+  updateStatus: 'idle',
+  updateMessage: '',
+  updateDownloaded: 0,
+  updateTotal: null,
 
   bootstrap: async function () {
     set({ loading: true, lastError: null })
@@ -177,5 +191,61 @@ export const useAppStore = create<AppState>((set, get) => ({
       await bridge.clearHistory()
       set({ history: [] })
     })
+  },
+
+  checkForUpdates: async function () {
+    set({ updateStatus: 'checking', updateMessage: '' })
+    try {
+      const update = await check()
+      if (update) {
+        set({
+          updateAvailable: update,
+          updateStatus: 'ready',
+          updateMessage: `发现新版本 ${update.version}`,
+        })
+        return
+      }
+      set({
+        updateAvailable: null,
+        updateStatus: 'latest',
+        updateMessage: '已经是最新版本',
+      })
+    } catch (error) {
+      set({
+        updateStatus: 'error',
+        updateMessage: error instanceof Error ? error.message : '检查更新失败',
+      })
+    }
+  },
+
+  installUpdate: async function () {
+    const update = get().updateAvailable
+    if (!update) {
+      return
+    }
+    set({
+      updateStatus: 'downloading',
+      updateMessage: '',
+      updateDownloaded: 0,
+      updateTotal: null,
+    })
+    try {
+      await update.downloadAndInstall(function (event) {
+        if (event.event === 'Started') {
+          set({ updateTotal: event.data.contentLength })
+          return
+        }
+        if (event.event === 'Progress') {
+          set((state) => ({ updateDownloaded: state.updateDownloaded + event.data.chunkLength }))
+        }
+      })
+      set({ updateMessage: '更新已就绪，正在重启...' })
+      await relaunch()
+    } catch (error) {
+      set({
+        updateStatus: 'error',
+        updateMessage: error instanceof Error ? error.message : '安装更新失败',
+      })
+    }
   },
 }))

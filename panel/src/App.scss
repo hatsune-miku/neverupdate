@@ -6,7 +6,7 @@
   padding: 20px 24px;
   gap: 14px;
   overflow: hidden;
-  background: radial-gradient(ellipse at 18% 8%, rgba(212, 137, 158, 0.06) 0%, transparent 45%), radial-gradient(ellipse at 82% 92%, rgba(232, 176, 192, 0.06) 0%, transparent 45%), var(--nu-kinu);
+  background: var(--nu-kinu);
   animation: cmd-enter 500ms var(--nu-ease) both;
 }
 
@@ -32,6 +32,28 @@
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.nu-cmd-toolbar-divider {
+  flex-shrink: 0;
+  width: 1px;
+  height: 22px;
+  margin: 0 2px;
+  background: var(--nu-border-strong);
+  align-self: center;
+}
+
+.nu-cmd-toolbar-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  flex-shrink: 0;
+
+  .fa-regular,
+  .fa-solid {
+    font-size: 12px;
+    line-height: 1;
+  }
 }
 
 .nu-cmd-badge,
@@ -72,6 +94,26 @@
   color: var(--nu-kurenai);
   font-size: 13px;
   animation: fade-slide-down 300ms var(--nu-ease);
+}
+
+.nu-cmd-update {
+  flex-shrink: 0;
+  padding: 9px 14px;
+  border: 1px solid var(--nu-sora-soft);
+  border-radius: 12px;
+  background: var(--nu-sora-soft);
+  color: var(--nu-sora);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  &.error {
+    border-color: var(--nu-kurenai-soft);
+    background: var(--nu-kurenai-soft);
+    color: var(--nu-kurenai);
+  }
 }
 
 .nu-cmd-body {

@@ -3,7 +3,6 @@
   border: 1px solid var(--nu-border-default);
   border-radius: 18px;
   padding: 16px;
-  box-shadow: var(--nu-shadow-sm);
 }
 
 .af-header {
@@ -72,7 +71,6 @@
   border-radius: 16px;
   border: 1px solid var(--nu-border-default);
   background: var(--nu-yuki);
-  box-shadow: var(--nu-shadow-lg);
   padding: 14px;
   display: flex;
   flex-direction: column;
@@ -88,6 +86,14 @@
     margin: 0;
     font-size: 16px;
     color: var(--nu-sumi);
+  }
+
+  .nu-icon-btn {
+    border: none;
+    background: transparent;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
   }
 }
 
@@ -186,6 +192,35 @@
   margin: 0;
   color: var(--nu-kurenai);
   font-size: 13px;
+}
+
+.af-principle {
+  max-height: 220px;
+  overflow: auto;
+  border: 1px solid var(--nu-border-default);
+  border-radius: 10px;
+  background: var(--nu-shiro);
+  padding: 10px;
+  color: var(--nu-sumi-soft);
+  font-size: 13px;
+  line-height: 1.6;
+
+  h4 {
+    margin: 0 0 8px;
+    color: var(--nu-sumi);
+    font-size: 14px;
+  }
+
+  h3 {
+    margin: 0 0 8px;
+    color: var(--nu-sumi);
+    font-size: 13px;
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 18px;
+  }
 }
 
 .af-extreme-check {

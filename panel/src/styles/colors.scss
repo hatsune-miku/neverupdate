@@ -40,3 +40,44 @@
 
   --nu-ease: cubic-bezier(0.29, 0, 0, 1);
 }
+
+:root[data-theme='dark'] {
+  --nu-kinu: #171a20;
+  --nu-shiro: #1d222b;
+  --nu-yuki: #202631;
+  --nu-suna: #2a313d;
+
+  --nu-pink: #d98ca5;
+  --nu-pink-deep: #e6b8c6;
+  --nu-pink-soft: rgba(217, 140, 165, 0.16);
+  --nu-pink-glow: rgba(217, 140, 165, 0.24);
+
+  --nu-sakura: #dca7b7;
+  --nu-sakura-soft: rgba(220, 167, 183, 0.16);
+
+  --nu-kurenai: #e17d7d;
+  --nu-kurenai-soft: rgba(225, 125, 125, 0.14);
+  --nu-kurenai-glow: rgba(225, 125, 125, 0.24);
+
+  --nu-kohaku: #d8a86b;
+  --nu-kohaku-soft: rgba(216, 168, 107, 0.15);
+
+  --nu-sora: #84b1cf;
+  --nu-sora-soft: rgba(132, 177, 207, 0.16);
+
+  --nu-wakaba: #66ad7b;
+  --nu-wakaba-deep: #9ad5ad;
+  --nu-wakaba-soft: rgba(102, 173, 123, 0.16);
+
+  --nu-sumi: #f0f2f5;
+  --nu-sumi-soft: #cad2de;
+  --nu-sumi-mute: #9ca8b8;
+  --nu-sumi-faint: #637085;
+
+  --nu-border-default: rgba(240, 242, 245, 0.12);
+  --nu-border-strong: rgba(240, 242, 245, 0.2);
+
+  --nu-shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.24);
+  --nu-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.32);
+  --nu-shadow-lg: 0 18px 50px rgba(0, 0, 0, 0.42);
+}

@@ -6,31 +6,19 @@
   border-radius: 20px;
   background: var(--nu-yuki);
   border: 1px solid var(--nu-border-default);
-  box-shadow: var(--nu-shadow-sm);
   flex-shrink: 0;
-  transition:
-    border-color 400ms var(--nu-ease),
-    box-shadow 400ms var(--nu-ease);
+  transition: border-color 400ms var(--nu-ease);
 
   &.secure {
     border-color: rgba(212, 137, 158, 0.2);
-    box-shadow:
-      0 2px 12px rgba(212, 137, 158, 0.08),
-      inset 0 0 24px rgba(212, 137, 158, 0.03);
   }
 
   &.breach {
     border-color: rgba(196, 92, 92, 0.2);
-    box-shadow:
-      0 2px 12px rgba(196, 92, 92, 0.08),
-      inset 0 0 24px rgba(196, 92, 92, 0.03);
   }
 
   &.critical {
     border-color: rgba(196, 154, 92, 0.2);
-    box-shadow:
-      0 2px 12px rgba(196, 154, 92, 0.08),
-      inset 0 0 24px rgba(196, 154, 92, 0.03);
   }
 }
 
@@ -57,14 +45,11 @@
     inset: 7px;
     border-radius: 50%;
     background: var(--nu-sumi-faint);
-    transition:
-      background-color 400ms var(--nu-ease),
-      box-shadow 400ms var(--nu-ease);
+    transition: background-color 400ms var(--nu-ease);
   }
 
   .secure & {
     border-color: var(--nu-pink);
-    animation: seal-breathe-pink 3s ease-in-out infinite;
 
     &::after {
       background: var(--nu-pink);
@@ -73,7 +58,6 @@
 
   .breach & {
     border-color: var(--nu-kurenai);
-    animation: seal-breathe-kurenai 2s ease-in-out infinite;
 
     &::after {
       background: var(--nu-kurenai);
@@ -82,7 +66,6 @@
 
   .critical & {
     border-color: var(--nu-kohaku);
-    animation: seal-breathe-kohaku 2.4s ease-in-out infinite;
 
     &::after {
       background: var(--nu-kohaku);
@@ -119,7 +102,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  color: var(--nu-wakaba-deep);
+  color: var(--nu-pink-deep);
   font-weight: 600;
 }
 
@@ -127,7 +110,7 @@
   width: 14px;
   height: 14px;
   flex-shrink: 0;
-  color: var(--nu-wakaba);
+  color: var(--nu-pink);
 }
 
 .status-hero-sep {
@@ -142,36 +125,6 @@
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
-}
-
-@keyframes seal-breathe-pink {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(212, 137, 158, 0);
-  }
-  50% {
-    box-shadow: 0 0 14px 4px rgba(212, 137, 158, 0.18);
-  }
-}
-
-@keyframes seal-breathe-kurenai {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(196, 92, 92, 0);
-  }
-  50% {
-    box-shadow: 0 0 14px 4px rgba(196, 92, 92, 0.18);
-  }
-}
-
-@keyframes seal-breathe-kohaku {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(196, 154, 92, 0);
-  }
-  50% {
-    box-shadow: 0 0 14px 4px rgba(196, 154, 92, 0.16);
-  }
 }
 
 @keyframes seal-dim {

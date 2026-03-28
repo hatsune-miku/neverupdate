@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 import { DaemonControl } from '@/components/DaemonControl'
 import { AdditionalFeatures } from '@/components/AdditionalFeatures'
@@ -9,6 +9,8 @@ import { StatusHero } from '@/components/StatusHero'
 import { useAppStore } from '@/store'
 
 import './App.scss'
+
+const THEME_KEY = 'neverupdate-theme'
 
 export default function App() {
   const {
@@ -28,13 +30,23 @@ export default function App() {
     executePoint,
     executeAll,
     registerService,
-    reregisterService,
     startService,
     stopService,
     unregisterService,
     runExtremeMode,
     clearHistory,
+    updateAvailable,
+    updateStatus,
+    updateMessage,
+    updateDownloaded,
+    updateTotal,
+    checkForUpdates,
+    installUpdate,
   } = useAppStore()
+  const [showDiagnostics, setShowDiagnostics] = useState(false)
+  const [theme, setTheme] = useState<'light' | 'dark'>(function () {
+    return localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light'
+  })
 
   const preflightOk = preflight?.passed === true
 
@@ -45,12 +57,44 @@ export default function App() {
     [bootstrap],
   )
 
+  useEffect(
+    function () {
+      document.documentElement.setAttribute('data-theme', theme)
+      localStorage.setItem(THEME_KEY, theme)
+    },
+    [theme],
+  )
+
+  useEffect(
+    function () {
+      if (!riskAccepted) {
+        return
+      }
+      void checkForUpdates()
+    },
+    [riskAccepted, checkForUpdates],
+  )
+
   if (!riskAccepted) {
     return <RiskGate onAccept={acceptRisk} />
   }
 
-  if (!preflightOk) {
-    return <Diagnostics preflight={preflight} busy={busy} loading={loading} onRefresh={refresh} />
+  if (!preflightOk || showDiagnostics) {
+    return (
+      <Diagnostics
+        preflight={preflight}
+        busy={busy}
+        loading={loading}
+        onRefresh={refresh}
+        onBack={
+          preflightOk
+            ? function () {
+                setShowDiagnostics(false)
+              }
+            : undefined
+        }
+      />
+    )
   }
 
   return (
@@ -60,15 +104,73 @@ export default function App() {
           NeverUpdate&nbsp;<span className="nu-cmd-brand-emoticon">(˶˃ ᵕ ˂˶)</span>
         </h1>
         <div className="nu-cmd-toolbar">
-          <span className="nu-cmd-badge-passive">前置已通过</span>
-          <span className="nu-cmd-badge-passive">{daemonSnapshot?.runtime.running ? '守护运行中' : '守护未运行'}</span>
-          <button className="nu-btn nu-btn-ghost" disabled={busy || loading} type="button" onClick={refresh}>
-            刷新数据
+          <button
+            className="nu-cmd-badge"
+            type="button"
+            onClick={function () {
+              setShowDiagnostics(true)
+            }}
+          >
+            前置检查
+          </button>
+          <button
+            className="nu-btn nu-btn-ghost"
+            disabled={updateStatus === 'checking' || updateStatus === 'downloading'}
+            type="button"
+            onClick={function () {
+              void checkForUpdates()
+            }}
+          >
+            {updateStatus === 'checking' ? '检查中' : '检查更新'}
+          </button>
+          {updateAvailable ? (
+            <button
+              className="nu-btn nu-btn-primary"
+              disabled={updateStatus === 'downloading'}
+              type="button"
+              onClick={function () {
+                void installUpdate()
+              }}
+            >
+              {updateStatus === 'downloading' ? '更新中' : `更新到 ${updateAvailable.version}`}
+            </button>
+          ) : null}
+          <span className="nu-cmd-toolbar-divider" aria-hidden />
+          <button
+            className="nu-icon-btn nu-cmd-toolbar-icon"
+            type="button"
+            onClick={function () {
+              setTheme(theme === 'dark' ? 'light' : 'dark')
+            }}
+            aria-label="切换暗色模式"
+            title={theme === 'dark' ? '切换到亮色模式' : '切换到暗色模式'}
+          >
+            <i className={theme === 'dark' ? 'fa-regular fa-sun' : 'fa-regular fa-moon'} aria-hidden />
+          </button>
+          <button
+            className="nu-icon-btn nu-cmd-toolbar-icon"
+            disabled={busy || loading}
+            type="button"
+            onClick={refresh}
+            aria-label="刷新数据"
+            title="刷新数据"
+          >
+            <i className="fa-solid fa-arrows-rotate" aria-hidden />
           </button>
         </div>
       </header>
 
       {lastError ? <div className="nu-cmd-error">{lastError}</div> : null}
+      {updateMessage ? (
+        <div className={`nu-cmd-update ${updateStatus === 'error' ? 'error' : ''}`}>
+          <span>{updateMessage}</span>
+          {updateStatus === 'downloading' && updateTotal ? (
+            <span className="nu-mono">
+              {Math.round((updateDownloaded / updateTotal) * 100)}%
+            </span>
+          ) : null}
+        </div>
+      ) : null}
 
       <StatusHero loading={loading} busy={busy} preflight={preflight} statuses={statuses} daemonSnapshot={daemonSnapshot} onExecuteAll={executeAll} />
 
@@ -88,9 +190,7 @@ export default function App() {
           <DaemonControl
             busy={busy || loading}
             snapshot={daemonSnapshot}
-            onRegisterOrReregister={
-              daemonSnapshot?.runtime.service_registered ? reregisterService : registerService
-            }
+            onRegister={registerService}
             onToggleRunning={function (running) {
               if (running) {
                 stopService()

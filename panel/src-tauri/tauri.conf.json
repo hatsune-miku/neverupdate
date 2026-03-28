@@ -35,20 +35,13 @@
     "active": true,
     "targets": "all",
     "createUpdaterArtifacts": true,
-    "icon": [
-      "icons/icon.ico"
-    ],
-    "resources": [
-      "bin/neverupdate-daemon.exe"
-    ]
+    "icon": ["icons/icon.ico"],
+    "resources": ["bin/neverupdate-daemon.exe"]
   },
   "plugins": {
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEVDNUUyMEIwMDQyQTFCNTQKUldSVUd5b0VzQ0JlN0ZsTVFsSm05UlhybXQyYUtyOGl6bHJYWmhzOEVnVkZSTzBUMHRleC9VR3UK",
-      "endpoints": [
-        "https://kvm-api.vanillacake.cn/latest.json",
-        "https://github.com/hatsune-miku/kvm/releases/latest/download/latest.json"
-      ],
+      "endpoints": ["https://neverupdate-api.vanillacake.cn/latest.json", "https://github.com/hatsune-miku/neverupdate/releases/latest/download/latest.json"],
       "windows": {
         "installMode": "basicUi"
       }

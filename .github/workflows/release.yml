@@ -1,0 +1,88 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - release
+
+jobs:
+  publish-tauri:
+    environment: Release
+    permissions:
+      contents: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows-latest
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Restore Rust cache
+        id: cache-rust-restore
+        uses: actions/cache/restore@v4
+        with:
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock', '**/Cargo.toml') }}
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target
+
+      - name: Install panel dependencies
+        working-directory: panel
+        run: bun install --frozen-lockfile
+
+      - name: Build daemon (neverupdate-daemon)
+        run: cargo build -p nu_daemon --release
+
+      - name: Stage daemon for Tauri bundle
+        shell: bash
+        run: |
+          mkdir -p panel/src-tauri/bin
+          cp target/release/neverupdate-daemon.exe panel/src-tauri/bin/neverupdate-daemon.exe
+
+      - uses: tauri-apps/tauri-action@v0.6.0
+        id: tauri
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          tagName: v__VERSION__
+          releaseName: 'NeverUpdate v__VERSION__'
+          releaseBody: 'Automated release build for NeverUpdate.'
+          releaseDraft: true
+          prerelease: false
+          projectPath: ./panel
+
+      - name: Upload standalone daemon binary
+        if: success()
+        shell: bash
+        run: |
+          gh release upload "v${{ steps.tauri.outputs.appVersion }}" "target/release/neverupdate-daemon.exe" --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Save Rust cache
+        if: success() && steps.cache-rust-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          key: ${{ steps.cache-rust-restore.outputs.cache-primary-key }}
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target

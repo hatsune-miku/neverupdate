@@ -59,7 +59,6 @@ input {
     transform 220ms var(--nu-ease),
     background-color 220ms var(--nu-ease),
     border-color 220ms var(--nu-ease),
-    box-shadow 220ms var(--nu-ease),
     color 220ms var(--nu-ease);
 
   &:disabled {
@@ -79,10 +78,10 @@ input {
 .nu-btn-primary {
   border: none;
   color: var(--nu-yuki);
-  background: linear-gradient(135deg, var(--nu-pink) 0%, var(--nu-pink-deep) 100%);
+  background: var(--nu-pink);
 
   &:not(:disabled):hover {
-    box-shadow: 0 4px 16px var(--nu-pink-glow);
+    background: var(--nu-pink-deep);
   }
 }
 
@@ -105,10 +104,43 @@ input {
 
   &:not(:disabled):hover {
     background: rgba(196, 92, 92, 0.16);
-    box-shadow: 0 4px 16px var(--nu-kurenai-glow);
   }
 }
 
 .nu-mono {
   font-family: 'JetBrains Mono', monospace;
+}
+
+.nu-icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--nu-border-strong);
+  background: var(--nu-yuki);
+  color: var(--nu-sumi-mute);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition:
+    color 180ms var(--nu-ease),
+    border-color 180ms var(--nu-ease),
+    background-color 180ms var(--nu-ease);
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  &:hover {
+    color: var(--nu-sumi);
+    border-color: var(--nu-pink-soft);
+    background: var(--nu-shiro);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
 }

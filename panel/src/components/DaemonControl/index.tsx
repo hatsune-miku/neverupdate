@@ -5,12 +5,12 @@ import './index.scss'
 interface DaemonControlProps {
   busy: boolean
   snapshot: DaemonSnapshot | null
-  onRegisterOrReregister: () => void
+  onRegister: () => void
   onToggleRunning: (running: boolean) => void
   onUnregister: () => void
 }
 
-export function DaemonControl({ busy, snapshot, onRegisterOrReregister, onToggleRunning, onUnregister }: DaemonControlProps) {
+export function DaemonControl({ busy, snapshot, onRegister, onToggleRunning, onUnregister }: DaemonControlProps) {
   const runtime = snapshot?.runtime
   const running = runtime?.running || false
   const installed = runtime?.service_registered || false
@@ -47,9 +47,7 @@ export function DaemonControl({ busy, snapshot, onRegisterOrReregister, onToggle
             {running ? '停止服务' : '启动服务'}
           </button>
         )}
-        <button className="nu-btn nu-btn-ghost" disabled={busy} type="button" onClick={onRegisterOrReregister}>
-          {installed ? '重新安装' : '安装服务'}
-        </button>
+        {!installed ? <button className="nu-btn nu-btn-ghost" disabled={busy} type="button" onClick={onRegister}>安装服务</button> : null}
         {installed && (
           <button className="nu-btn nu-btn-danger" disabled={busy} type="button" onClick={onUnregister}>
             卸载服务

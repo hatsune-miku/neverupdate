@@ -9,17 +9,20 @@
     "tauri": "tauri"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^7.2.0",
     "@tauri-apps/api": "~2.9.1",
+    "@tauri-apps/plugin-process": "~2.3.1",
     "@tauri-apps/plugin-updater": "~2.9.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-markdown": "^10.1.0",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@tauri-apps/cli": "~2.9.6",
+    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
-    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@vitejs/plugin-react": "^5.1.2",
     "prettier": "^3.6.2",
     "sass": "^1.86.3",

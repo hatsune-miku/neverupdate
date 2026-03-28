@@ -1,6 +1,8 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 
+import { getGuardPrinciple } from '@/content/principles'
 import type { GuardAction, GuardPointDefinition, GuardPointStatus } from '@/types'
+import ReactMarkdown from 'react-markdown'
 
 import './index.scss'
 
@@ -36,6 +38,8 @@ function resolveAction(status: GuardPointStatus | null): ActionDescriptor {
 }
 
 export function GuardMatrix({ points, statuses, busy, onAction }: GuardMatrixProps) {
+  const [principlePointId, setPrinciplePointId] = useState<string | null>(null)
+
   const sorted = useMemo(
     function () {
       return points.filter(function (p) {
@@ -49,13 +53,10 @@ export function GuardMatrix({ points, statuses, busy, onAction }: GuardMatrixPro
     onAction(pointId, action)
   }
 
+  const principle = principlePointId ? getGuardPrinciple(principlePointId) : null
+
   return (
     <div className="guard-matrix">
-      <header className="guard-matrix-header">
-        <h3>检查点</h3>
-        <span className="guard-matrix-count">{sorted.length} 个检查点</span>
-      </header>
-
       <div className="guard-matrix-list">
         {sorted.map(function (point) {
           const status = findStatus(statuses, point.id)
@@ -66,7 +67,7 @@ export function GuardMatrix({ points, statuses, busy, onAction }: GuardMatrixPro
           const rowClass = ['guard-row', guarded ? 'guarded' : 'released', breached ? 'breached' : ''].filter(Boolean).join(' ')
 
           const tagLabel = breached ? '失守了！' : guarded ? '阻断中' : '已放开'
-          const tagTone = breached ? 'kurenai' : guarded ? 'wakaba' : 'dim'
+          const tagTone = breached ? 'kurenai' : guarded ? 'pink' : 'dim'
           const showGuardOkTag = guarded
 
           return (
@@ -74,6 +75,16 @@ export function GuardMatrix({ points, statuses, busy, onAction }: GuardMatrixPro
               <div className="guard-row-body">
                 <div className="guard-row-top">
                   <h4>{point.title}</h4>
+                  <button
+                    className="guard-row-help"
+                    type="button"
+                    aria-label={`${point.title} 技术原理`}
+                    onClick={function () {
+                      setPrinciplePointId(point.id)
+                    }}
+                  >
+                    ?
+                  </button>
                   <span className={`guard-row-tag ${tagTone}`}>
                     {showGuardOkTag ? (
                       <>
@@ -112,6 +123,38 @@ export function GuardMatrix({ points, statuses, busy, onAction }: GuardMatrixPro
           )
         })}
       </div>
+
+      {principle ? (
+        <div
+          className="guard-principle-backdrop"
+          role="presentation"
+          onClick={function () {
+            setPrinciplePointId(null)
+          }}
+        >
+          <section
+            className="guard-principle-modal"
+            onClick={function (event) {
+              event.stopPropagation()
+            }}
+          >
+            <header className="guard-principle-header">
+              <h3>{principle.title} · 技术原理</h3>
+              <button className="nu-icon-btn" type="button" aria-label="关闭" onClick={function () { setPrinciplePointId(null) }}>
+                <svg viewBox="0 0 16 16" aria-hidden>
+                  <path
+                    fill="currentColor"
+                    d="M3.22 3.22a.75.75 0 0 1 1.06 0L8 6.94l3.72-3.72a.75.75 0 1 1 1.06 1.06L9.06 8l3.72 3.72a.75.75 0 0 1-1.06 1.06L8 9.06l-3.72 3.72a.75.75 0 1 1-1.06-1.06L6.94 8 3.22 4.28a.75.75 0 0 1 0-1.06Z"
+                  />
+                </svg>
+              </button>
+            </header>
+            <div className="guard-principle-content">
+              <ReactMarkdown>{principle.markdown}</ReactMarkdown>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   )
 }
