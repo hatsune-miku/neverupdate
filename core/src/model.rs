@@ -56,6 +56,15 @@ pub struct HistoryEntry {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InterceptionEntry {
+    pub point_id: String,
+    pub behavior: String,
+    pub blocked: bool,
+    pub timestamp: DateTime<Utc>,
+    pub message: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DaemonRuntimeStatus {
     pub running: bool,
     pub service_registered: bool,

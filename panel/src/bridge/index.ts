@@ -1,4 +1,4 @@
-import type { DaemonSnapshot, GuardAction, GuardPointDefinition, GuardPointStatus, GuardSummary, HistoryEntry, PreflightReport } from '@/types'
+import type { DaemonSnapshot, GuardAction, GuardPointDefinition, GuardPointStatus, GuardSummary, HistoryEntry, InterceptionEntry, PreflightReport } from '@/types'
 import { invoke } from '@tauri-apps/api/core'
 
 export const bridge = {
@@ -24,6 +24,18 @@ export const bridge = {
 
   readHistory: function (limit: number): Promise<HistoryEntry[]> {
     return invoke('read_history_cmd', { limit })
+  },
+
+  clearHistory: function (): Promise<void> {
+    return invoke('clear_history_cmd')
+  },
+
+  readInterceptions: function (limit: number): Promise<InterceptionEntry[]> {
+    return invoke('read_interceptions_cmd', { limit })
+  },
+
+  clearInterceptions: function (): Promise<void> {
+    return invoke('clear_interceptions_cmd')
   },
 
   daemonSnapshot: function (): Promise<DaemonSnapshot | null> {

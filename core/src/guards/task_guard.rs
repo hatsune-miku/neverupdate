@@ -1,235 +1,250 @@
 use std::path::{Path, PathBuf};
 
-use crate::command::run_command;
 use crate::error::Result;
-use crate::guards::status_tasks;
+use crate::guards::GuardPoint;
 use crate::model::GuardPointStatus;
 use crate::pathing::task_root_paths;
 use crate::state::PersistedState;
+use crate::ti_service::TiService;
 
 const DISABLE_PREFIX: &str = "DISABLE:";
 
-pub fn check(_state: &PersistedState) -> Result<GuardPointStatus> {
-    let files = list_target_task_files()?;
-    if files.is_empty() {
-        return Ok(status_tasks(
-            false,
-            Some(String::from("no task files found under target folders")),
-        ));
+pub struct TaskGuard;
+
+impl GuardPoint for TaskGuard {
+    fn id(&self) -> &'static str {
+        "scheduled_tasks"
     }
 
-    let mut all_guarded = true;
-    let mut details = Vec::new();
-
-    for file in files {
-        let command_prefixed = task_command_prefixed(&file)?;
-        let scheduler_name = scheduler_task_name_from_file(&file);
-        let disabled = check_task_disabled(&scheduler_name);
-        all_guarded = all_guarded && command_prefixed && disabled;
-        details.push(format!(
-            "{}: command_prefixed={}, disabled={}",
-            scheduler_name, command_prefixed, disabled
-        ));
+    fn title(&self) -> &'static str {
+        "计划任务"
     }
 
-    Ok(status_tasks(all_guarded, Some(details.join(" | "))))
+    fn description(&self) -> &'static str {
+        "禁用 UpdateOrchestrator/WaaSMedic 任务并修改 Command"
+    }
+
+    fn interception_behavior(&self) -> Option<&'static str> {
+        Some("系统试图重建更新计划任务")
+    }
+
+    fn check(&self, _state: &PersistedState) -> Result<GuardPointStatus> {
+        let files = list_target_task_files();
+        if files.is_empty() {
+            return Ok(self.build_status(
+                true,
+                Some(String::from("no task files found (safe)")),
+            ));
+        }
+
+        let mut all_guarded = true;
+        let mut details = Vec::new();
+
+        for file in files {
+            let name = scheduler_task_name(&file);
+            match read_task_file_direct(&file) {
+                Ok(content) => {
+                    let disabled = is_xml_disabled(&content.text);
+                    let has_cmd = content.text.contains("<Command>");
+                    let prefixed = if has_cmd { is_commands_prefixed(&content.text) } else { true };
+                    let guarded = disabled && prefixed;
+                    all_guarded = all_guarded && guarded;
+                    details.push(format!("{name}: disabled={disabled}, prefixed={prefixed}"));
+                }
+                Err(e) => {
+                    all_guarded = false;
+                    details.push(format!("{name}: read error: {e}"));
+                }
+            }
+        }
+
+        Ok(self.build_status(all_guarded, Some(details.join(" | "))))
+    }
+
+    fn guard(&self, state: &mut PersistedState, ti: &TiService) -> Result<GuardPointStatus> {
+        let mut errors = Vec::new();
+        for file in list_target_task_files() {
+            if let Err(e) = patch_task_file(&file, true, state, ti) {
+                errors.push(format!("{}: {e}", scheduler_task_name(&file)));
+            }
+        }
+        let mut status = ti.as_admin(|| self.check(state))?;
+        if !errors.is_empty() {
+            let prev = status.message.unwrap_or_default();
+            status.message = Some(format!("{prev} | ERRORS: {}", errors.join("; ")));
+        }
+        Ok(status)
+    }
+
+    fn release(&self, state: &mut PersistedState, ti: &TiService) -> Result<GuardPointStatus> {
+        let mut errors = Vec::new();
+        for file in list_target_task_files() {
+            if let Err(e) = patch_task_file(&file, false, state, ti) {
+                errors.push(format!("{}: {e}", scheduler_task_name(&file)));
+            }
+        }
+        let mut status = ti.as_admin(|| self.check(state))?;
+        if !errors.is_empty() {
+            let prev = status.message.unwrap_or_default();
+            status.message = Some(format!("{prev} | ERRORS: {}", errors.join("; ")));
+        }
+        Ok(status)
+    }
 }
 
-pub fn guard(state: &mut PersistedState) -> Result<GuardPointStatus> {
-    let files = list_target_task_files()?;
-
-    for file in files {
-        patch_task_command(&file, true, state)?;
-        let scheduler_name = scheduler_task_name_from_file(&file);
-        let _ = run_command("schtasks", &["/Change", "/TN", &scheduler_name, "/DISABLE"]);
-    }
-
-    check(state)
-}
-
-pub fn release(state: &mut PersistedState) -> Result<GuardPointStatus> {
-    let files = list_target_task_files()?;
-
-    for file in files {
-        patch_task_command(&file, false, state)?;
-        let scheduler_name = scheduler_task_name_from_file(&file);
-        let _ = run_command("schtasks", &["/Change", "/TN", &scheduler_name, "/ENABLE"]);
-    }
-
-    check(state)
-}
-
-fn list_target_task_files() -> Result<Vec<PathBuf>> {
-    let mut files = Vec::new();
-
+fn list_target_task_files() -> Vec<PathBuf> {
+    let mut out = Vec::new();
     for root in task_root_paths() {
-        collect_files_recursively(&root, &mut files)?;
+        let _ = collect_files(&root, &mut out);
     }
-
-    Ok(files)
+    out
 }
 
-fn collect_files_recursively(root: &Path, output: &mut Vec<PathBuf>) -> Result<()> {
+fn collect_files(root: &Path, out: &mut Vec<PathBuf>) -> Result<()> {
     if !root.exists() {
         return Ok(());
     }
-
     for entry in std::fs::read_dir(root)? {
-        let entry = entry?;
-        let path = entry.path();
-
+        let path = entry?.path();
         if path.is_dir() {
-            collect_files_recursively(&path, output)?;
+            collect_files(&path, out)?;
         } else {
-            output.push(path);
+            out.push(path);
         }
     }
-
     Ok(())
 }
 
-fn scheduler_task_name_from_file(path: &Path) -> String {
-    let lower = path.to_string_lossy().replace('/', "\\");
+fn scheduler_task_name(path: &Path) -> String {
+    let s = path.to_string_lossy().replace('/', "\\");
     let marker = "\\System32\\Tasks\\";
-    if let Some(pos) = lower.find(marker) {
-        let tail = &lower[pos + marker.len()..];
-        return format!("\\{}", tail);
+    if let Some(pos) = s.find(marker) {
+        return format!("\\{}", &s[pos + marker.len()..]);
     }
-
-    let name = path
-        .file_name()
-        .map(|item| item.to_string_lossy().to_string())
-        .unwrap_or_else(|| String::from("unknown"));
+    let name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| String::from("unknown"));
     format!("\\{name}")
 }
 
-fn check_task_disabled(task_name: &str) -> bool {
-    let output = run_command(
-        "schtasks",
-        &["/Query", "/TN", task_name, "/FO", "LIST", "/V"],
-    );
-    if let Ok(text) = output {
-        let lower = text.to_ascii_lowercase();
-        return lower.contains("disabled") || text.contains("已禁用");
-    }
+// ── XML content checks (no external commands) ──
 
-    false
+fn is_xml_disabled(xml: &str) -> bool {
+    xml.contains("<Enabled>false</Enabled>")
 }
 
-fn task_command_prefixed(path: &Path) -> Result<bool> {
-    let content = read_task_file(path)?;
-
-    let mut saw_command = false;
-    let mut all_prefixed = true;
-
-    for segment in content.text.split("<Command>").skip(1) {
-        if let Some((value, _)) = segment.split_once("</Command>") {
-            saw_command = true;
-            let trimmed = value.trim();
-            if !trimmed.starts_with(DISABLE_PREFIX) {
-                all_prefixed = false;
+fn is_commands_prefixed(xml: &str) -> bool {
+    let mut saw = false;
+    for seg in xml.split("<Command>").skip(1) {
+        if let Some((val, _)) = seg.split_once("</Command>") {
+            saw = true;
+            if !val.trim().starts_with(DISABLE_PREFIX) {
+                return false;
             }
         }
     }
-
-    Ok(saw_command && all_prefixed)
+    saw
 }
 
-fn patch_task_command(path: &Path, guard_mode: bool, state: &mut PersistedState) -> Result<()> {
+// ── XML patching (all via TI file I/O, no schtasks) ──
+
+fn patch_task_file(path: &Path, guard_mode: bool, state: &mut PersistedState, ti: &TiService) -> Result<()> {
     let key = path.to_string_lossy().to_string();
-    let original = read_task_file(path)?;
+    let bytes = ti.read_file(path)?;
+    let original = decode_task_bytes(&bytes);
+    let utf16le = bytes.starts_with(&[0xFF, 0xFE]);
+
     let updated = if guard_mode {
-        prefix_task_commands(&original.text)
+        let s = prefix_commands(&original);
+        set_xml_enabled(&s, false)
     } else {
-        restore_task_commands(&original.text, state.task_command_backup.get(&key))
+        let s = restore_commands(&original, state.task_command_backup.get(&key));
+        set_xml_enabled(&s, true)
     };
 
     if guard_mode {
-        state
-            .task_command_backup
-            .entry(key.clone())
-            .or_insert(original.text.clone());
+        state.task_command_backup.entry(key).or_insert(original);
     }
 
-    write_task_file(path, &updated, original.utf16le)
+    let out_bytes = if utf16le {
+        encode_utf16le(&updated)
+    } else {
+        updated.into_bytes()
+    };
+
+    ti.write_file(path, &out_bytes)
 }
 
-fn prefix_task_commands(content: &str) -> String {
+fn set_xml_enabled(xml: &str, enabled: bool) -> String {
+    let val = if enabled { "true" } else { "false" };
+    let target = format!("<Enabled>{val}</Enabled>");
+
+    if xml.contains("<Enabled>true</Enabled>") {
+        return xml.replace("<Enabled>true</Enabled>", &target);
+    }
+    if xml.contains("<Enabled>false</Enabled>") {
+        return xml.replace("<Enabled>false</Enabled>", &target);
+    }
+    // No <Enabled> tag — insert after <Settings>
+    if let Some(pos) = xml.find("<Settings>") {
+        let insert = pos + "<Settings>".len();
+        return format!("{}\n    {}{}", &xml[..insert], target, &xml[insert..]);
+    }
+    xml.to_string()
+}
+
+fn prefix_commands(content: &str) -> String {
     let mut result = String::new();
-    let mut remaining = content;
-
-    while let Some(start) = remaining.find("<Command>") {
-        let before = &remaining[..start + "<Command>".len()];
-        result.push_str(before);
-        remaining = &remaining[start + "<Command>".len()..];
-
-        if let Some(end) = remaining.find("</Command>") {
-            let command = &remaining[..end];
-            let trimmed = command.trim();
-            if trimmed.starts_with(DISABLE_PREFIX) {
-                result.push_str(command);
+    let mut rem = content;
+    while let Some(start) = rem.find("<Command>") {
+        result.push_str(&rem[..start + "<Command>".len()]);
+        rem = &rem[start + "<Command>".len()..];
+        if let Some(end) = rem.find("</Command>") {
+            let cmd = &rem[..end];
+            if cmd.trim().starts_with(DISABLE_PREFIX) {
+                result.push_str(cmd);
             } else {
-                result.push_str(&format!("{DISABLE_PREFIX}{command}"));
+                result.push_str(&format!("{DISABLE_PREFIX}{cmd}"));
             }
             result.push_str("</Command>");
-            remaining = &remaining[end + "</Command>".len()..];
+            rem = &rem[end + "</Command>".len()..];
         } else {
-            result.push_str(remaining);
-            remaining = "";
+            result.push_str(rem);
+            rem = "";
             break;
         }
     }
-
-    result.push_str(remaining);
+    result.push_str(rem);
     result
 }
 
-fn restore_task_commands(current: &str, backup: Option<&String>) -> String {
-    if let Some(content) = backup {
-        return content.clone();
+fn restore_commands(current: &str, backup: Option<&String>) -> String {
+    if let Some(b) = backup {
+        return b.clone();
     }
-
     current.replace("<Command>DISABLE:", "<Command>")
 }
 
-struct TaskContent {
-    text: String,
-    utf16le: bool,
-}
+struct TaskContent { text: String }
 
-fn read_task_file(path: &Path) -> Result<TaskContent> {
+fn read_task_file_direct(path: &Path) -> Result<TaskContent> {
     let bytes = std::fs::read(path)?;
-
-    if bytes.starts_with(&[0xFF, 0xFE]) {
-        let mut units = Vec::new();
-        for chunk in bytes[2..].chunks(2) {
-            if chunk.len() == 2 {
-                units.push(u16::from_le_bytes([chunk[0], chunk[1]]));
-            }
-        }
-        return Ok(TaskContent {
-            text: String::from_utf16_lossy(&units),
-            utf16le: true,
-        });
-    }
-
-    Ok(TaskContent {
-        text: String::from_utf8_lossy(&bytes).to_string(),
-        utf16le: false,
-    })
+    Ok(TaskContent { text: decode_task_bytes(&bytes) })
 }
 
-fn write_task_file(path: &Path, content: &str, utf16le: bool) -> Result<()> {
-    if utf16le {
-        let mut bytes = vec![0xFF, 0xFE];
-        for unit in content.encode_utf16() {
-            let pair = unit.to_le_bytes();
-            bytes.extend_from_slice(&pair);
-        }
-        std::fs::write(path, bytes)?;
-        return Ok(());
+fn decode_task_bytes(bytes: &[u8]) -> String {
+    if bytes.starts_with(&[0xFF, 0xFE]) {
+        let units: Vec<u16> = bytes[2..].chunks(2)
+            .filter_map(|c| (c.len() == 2).then(|| u16::from_le_bytes([c[0], c[1]])))
+            .collect();
+        String::from_utf16_lossy(&units)
+    } else {
+        String::from_utf8_lossy(bytes).to_string()
     }
+}
 
-    std::fs::write(path, content)?;
-    Ok(())
+fn encode_utf16le(s: &str) -> Vec<u8> {
+    let mut out = vec![0xFF, 0xFE];
+    for unit in s.encode_utf16() {
+        out.extend_from_slice(&unit.to_le_bytes());
+    }
+    out
 }

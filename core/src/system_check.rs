@@ -2,12 +2,14 @@ use std::ptr;
 
 use is_elevated::is_elevated;
 use windows_sys::Win32::Foundation::{CloseHandle, GetLastError, ERROR_ALREADY_EXISTS, HANDLE};
+use windows_sys::Win32::Security::{CheckTokenMembership, CreateWellKnownSid, WinLocalSystemSid};
 use windows_sys::Win32::System::Threading::CreateMutexW;
 use winreg::enums::{HKEY_LOCAL_MACHINE, KEY_READ, KEY_SET_VALUE};
 use winreg::RegKey;
 
 use crate::error::{NuError, Result};
 use crate::model::{PreflightCheck, PreflightReport};
+use crate::ti_service::TiService;
 
 pub struct GlobalInstanceGuard {
     h_mutex: HANDLE,
@@ -67,6 +69,37 @@ pub fn has_admin_privilege() -> bool {
     is_elevated()
 }
 
+fn is_local_system_token() -> bool {
+    let mut sid_buf = [0u8; 256];
+    let mut cb = sid_buf.len() as u32;
+    unsafe {
+        if CreateWellKnownSid(
+            WinLocalSystemSid,
+            ptr::null_mut(),
+            sid_buf.as_mut_ptr() as *mut _,
+            &mut cb,
+        ) == 0
+        {
+            return false;
+        }
+        let mut is_member = 0i32;
+        if CheckTokenMembership(
+            ptr::null_mut(),
+            sid_buf.as_mut_ptr() as *mut _,
+            &mut is_member,
+        ) == 0
+        {
+            return false;
+        }
+        is_member != 0
+    }
+}
+
+/// Interactive admin (UAC elevated) or LocalSystem (e.g. Windows service).
+pub fn has_privileged_session() -> bool {
+    is_elevated() || is_local_system_token()
+}
+
 pub fn verify_admin_writable() -> bool {
     let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
     let key = hklm.open_subkey_with_flags("SOFTWARE", KEY_SET_VALUE);
@@ -110,16 +143,19 @@ pub fn run_preflight_checks() -> PreflightReport {
         detail: format!("ProductName={s_product_name}"),
     });
 
-    let b_elevated = has_admin_privilege();
+    let b_privileged = has_privileged_session();
+    let admin_detail = if is_elevated() {
+        String::from("interactive elevated (UAC)")
+    } else if is_local_system_token() {
+        String::from("LocalSystem (e.g. service session; is_elevated is often false here)")
+    } else {
+        String::from("not elevated and not LocalSystem")
+    };
     checks.push(PreflightCheck {
         id: String::from("admin"),
-        title: String::from("需要管理员权限"),
-        passed: b_elevated,
-        detail: if b_elevated {
-            String::from("is_elevated=true")
-        } else {
-            String::from("is_elevated=false")
-        },
+        title: String::from("需要管理员或 LocalSystem 权限"),
+        passed: b_privileged,
+        detail: admin_detail,
     });
 
     let b_elevated_verified = verify_admin_writable();
@@ -131,6 +167,18 @@ pub fn run_preflight_checks() -> PreflightReport {
             String::from("registry write test passed")
         } else {
             String::from("registry write test failed")
+        },
+    });
+
+    let ti_result = TiService::probe();
+    let b_ti = ti_result.is_ok();
+    checks.push(PreflightCheck {
+        id: String::from("trusted_installer"),
+        title: String::from("TrustedInstaller 权限可用"),
+        passed: b_ti,
+        detail: match ti_result {
+            Ok(()) => String::from("TI impersonation ok"),
+            Err(e) => format!("TI failed: {e}"),
         },
     });
 

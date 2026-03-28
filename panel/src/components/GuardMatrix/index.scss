@@ -70,7 +70,7 @@
   }
 
   &.guarded::before {
-    background: var(--nu-pink);
+    background: var(--nu-wakaba);
   }
 
   &.breached::before {
@@ -120,6 +120,14 @@
     background: var(--nu-pink-soft);
   }
 
+  &.wakaba {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--nu-wakaba-deep);
+    background: var(--nu-wakaba-soft);
+  }
+
   &.kurenai {
     color: var(--nu-kurenai);
     background: var(--nu-kurenai-soft);
@@ -129,6 +137,12 @@
     color: var(--nu-sumi-mute);
     background: var(--nu-suna);
   }
+}
+
+.guard-row-tag-icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
 }
 
 .guard-row-desc {

@@ -21,6 +21,10 @@ pub fn history_file_path() -> Result<PathBuf> {
     Ok(ensure_program_data_dir()?.join("history.jsonl"))
 }
 
+pub fn interception_file_path() -> Result<PathBuf> {
+    Ok(ensure_program_data_dir()?.join("interceptions.jsonl"))
+}
+
 pub fn daemon_snapshot_file_path() -> Result<PathBuf> {
     Ok(ensure_program_data_dir()?.join("daemon-snapshot.json"))
 }

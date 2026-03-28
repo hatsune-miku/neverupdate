@@ -1,12 +1,13 @@
 use crate::command::run_command;
 use crate::error::Result;
-use crate::guards::status_hosts_firewall;
+use crate::guards::GuardPoint;
 use crate::model::GuardPointStatus;
 use crate::pathing::hosts_file_path;
+use crate::state::PersistedState;
+use crate::ti_service::TiService;
 
 const MARK_BEGIN: &str = "# NeverUpdate BEGIN";
 const MARK_END: &str = "# NeverUpdate END";
-const FIREWALL_RULE_NAME: &str = "NeverUpdate Block Windows Update Domains";
 
 const DOMAINS: [&str; 3] = [
     "*.windowsupdate.com",
@@ -14,26 +15,53 @@ const DOMAINS: [&str; 3] = [
     "*.delivery.mp.microsoft.com",
 ];
 
-pub fn check() -> Result<GuardPointStatus> {
-    let hosts_ok = check_hosts_content()?;
-    let firewall_ok = check_firewall_rule();
-    let guarded = hosts_ok && firewall_ok;
-    let detail = format!("hosts={hosts_ok}, firewall={firewall_ok}");
+const RULE_PREFIX: &str = "NeverUpdate_Block_";
+const BLOCKED_PROGRAMS: [(&str, &str); 3] = [
+    ("WaaSMedic", "%SystemRoot%\\System32\\WaaSMedicAgent.exe"),
+    ("UsoClient", "%SystemRoot%\\System32\\UsoClient.exe"),
+    ("musNotify", "%SystemRoot%\\System32\\musNotification.exe"),
+];
 
-    Ok(status_hosts_firewall(guarded, Some(detail)))
+pub struct HostsFirewallGuard;
+
+impl GuardPoint for HostsFirewallGuard {
+    fn id(&self) -> &'static str {
+        "hosts_firewall"
+    }
+
+    fn title(&self) -> &'static str {
+        "Hosts 与防火墙"
+    }
+
+    fn description(&self) -> &'static str {
+        "锁定更新域名到 127.0.0.1，并阻止更新程序出站"
+    }
+
+    fn interception_behavior(&self) -> Option<&'static str> {
+        Some("系统试图暗改Hosts以恢复更新")
+    }
+
+    fn check(&self, _state: &PersistedState) -> Result<GuardPointStatus> {
+        let hosts_ok = check_hosts_content().unwrap_or(false);
+        let firewall_ok = check_firewall_rules();
+        let guarded = hosts_ok && firewall_ok;
+        Ok(self.build_status(guarded, Some(format!("hosts={hosts_ok}, firewall={firewall_ok}"))))
+    }
+
+    fn guard(&self, _state: &mut PersistedState, ti: &TiService) -> Result<GuardPointStatus> {
+        ensure_hosts_entries(ti)?;
+        ti.as_admin(|| ensure_firewall_rules())?;
+        ti.as_admin(|| self.check(_state))
+    }
+
+    fn release(&self, _state: &mut PersistedState, ti: &TiService) -> Result<GuardPointStatus> {
+        remove_hosts_entries(ti)?;
+        ti.as_admin(|| remove_firewall_rules())?;
+        ti.as_admin(|| self.check(_state))
+    }
 }
 
-pub fn guard() -> Result<GuardPointStatus> {
-    ensure_hosts_entries()?;
-    ensure_firewall_rule()?;
-    check()
-}
-
-pub fn release() -> Result<GuardPointStatus> {
-    remove_hosts_entries()?;
-    remove_firewall_rule()?;
-    check()
-}
+// ── hosts ──
 
 fn check_hosts_content() -> Result<bool> {
     let path = hosts_file_path()?;
@@ -45,12 +73,12 @@ fn check_hosts_content() -> Result<bool> {
 
     Ok(DOMAINS
         .iter()
-        .all(|domain| content.contains(&format!("127.0.0.1 {domain}"))))
+        .all(|d| content.contains(&format!("127.0.0.1 {d}"))))
 }
 
-fn ensure_hosts_entries() -> Result<()> {
+fn ensure_hosts_entries(ti: &TiService) -> Result<()> {
     let path = hosts_file_path()?;
-    let mut content = std::fs::read_to_string(&path)?;
+    let mut content = ti.read_file_string(&path)?;
 
     if content.contains(MARK_BEGIN) && content.contains(MARK_END) {
         return Ok(());
@@ -68,13 +96,12 @@ fn ensure_hosts_entries() -> Result<()> {
     content.push_str(MARK_END);
     content.push('\n');
 
-    std::fs::write(path, content)?;
-    Ok(())
+    ti.write_file_string(&path, &content)
 }
 
-fn remove_hosts_entries() -> Result<()> {
+fn remove_hosts_entries(ti: &TiService) -> Result<()> {
     let path = hosts_file_path()?;
-    let content = std::fs::read_to_string(&path)?;
+    let content = ti.read_file_string(&path)?;
 
     if !content.contains(MARK_BEGIN) || !content.contains(MARK_END) {
         return Ok(());
@@ -87,51 +114,58 @@ fn remove_hosts_entries() -> Result<()> {
             inside = true;
             continue;
         }
-
         if line.trim() == MARK_END {
             inside = false;
             continue;
         }
-
         if !inside {
             result.push(line.to_string());
         }
     }
 
-    let final_content = format!("{}\n", result.join("\n"));
-    std::fs::write(path, final_content)?;
-    Ok(())
+    ti.write_file_string(&path, &format!("{}\n", result.join("\n")))
 }
 
-fn check_firewall_rule() -> bool {
-    let command = format!(
-    "$rule = Get-NetFirewallRule -DisplayName '{FIREWALL_RULE_NAME}' -ErrorAction SilentlyContinue; if ($null -eq $rule) {{ '0' }} else {{ '1' }}"
-  );
+// ── firewall via netsh (program-based outbound block) ──
 
-    if let Ok(output) = run_command("powershell", &["-NoProfile", "-Command", &command]) {
-        return output.trim() == "1";
+fn rule_name(tag: &str) -> String {
+    format!("{RULE_PREFIX}{tag}")
+}
+
+fn check_firewall_rules() -> bool {
+    BLOCKED_PROGRAMS.iter().all(|(tag, _)| {
+        run_command("netsh", &[
+            "advfirewall", "firewall", "show", "rule",
+            &format!("name={}", rule_name(tag)),
+        ]).is_ok()
+    })
+}
+
+fn ensure_firewall_rules() -> Result<()> {
+    for (tag, prog) in BLOCKED_PROGRAMS {
+        let name = rule_name(tag);
+        if run_command("netsh", &[
+            "advfirewall", "firewall", "show", "rule",
+            &format!("name={name}"),
+        ]).is_ok() {
+            continue;
+        }
+        run_command("netsh", &[
+            "advfirewall", "firewall", "add", "rule",
+            &format!("name={name}"),
+            "dir=out", "action=block",
+            &format!("program={prog}"),
+        ])?;
     }
-
-    false
-}
-
-fn ensure_firewall_rule() -> Result<()> {
-    let domains_joined = DOMAINS
-        .iter()
-        .map(|item| format!("'{item}'"))
-        .collect::<Vec<String>>()
-        .join(",");
-
-    let command = format!(
-    "if (-not (Get-NetFirewallRule -DisplayName '{FIREWALL_RULE_NAME}' -ErrorAction SilentlyContinue)) {{ New-NetFirewallRule -DisplayName '{FIREWALL_RULE_NAME}' -Direction Outbound -Action Block -RemoteFqdn {domains_joined} | Out-Null }}"
-  );
-
-    let _ = run_command("powershell", &["-NoProfile", "-Command", &command])?;
     Ok(())
 }
 
-fn remove_firewall_rule() -> Result<()> {
-    let command = format!("Get-NetFirewallRule -DisplayName '{FIREWALL_RULE_NAME}' -ErrorAction SilentlyContinue | Remove-NetFirewallRule");
-    let _ = run_command("powershell", &["-NoProfile", "-Command", &command])?;
+fn remove_firewall_rules() -> Result<()> {
+    for (tag, _) in BLOCKED_PROGRAMS {
+        let _ = run_command("netsh", &[
+            "advfirewall", "firewall", "delete", "rule",
+            &format!("name={}", rule_name(tag)),
+        ]);
+    }
     Ok(())
 }

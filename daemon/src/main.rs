@@ -1,10 +1,14 @@
+mod service_host;
+
 use std::time::Duration;
 
 use nu_core::{
-    acquire_global_instance, daemon_service_name, execute_all, load_daemon_snapshot,
+    acquire_global_instance, daemon_service_name, load_daemon_snapshot, run_maintenance_cycle,
     register_daemon_service, reregister_daemon_service, run_preflight_checks, start_daemon_service,
-    stop_daemon_service, store_daemon_snapshot, unregister_daemon_service, GuardAction,
+    stop_daemon_service, store_daemon_snapshot, unregister_daemon_service,
 };
+
+use service_host::DispatcherOutcome;
 
 enum Command {
     Run,
@@ -60,7 +64,7 @@ fn run_once_cycle() -> std::result::Result<(), String> {
 
     let _instance = acquire_global_instance("Global\\NeverUpdateDaemonMain")
         .map_err(|error| error.to_string())?;
-    let summary = execute_all(GuardAction::Guard);
+    let summary = run_maintenance_cycle();
 
     let message = if summary.errors.is_empty() {
         None
@@ -76,7 +80,8 @@ fn run_once_cycle() -> std::result::Result<(), String> {
     Ok(())
 }
 
-fn run_loop() -> std::result::Result<(), String> {
+/// Main loop for both SCM service and interactive `run` (after dispatcher returns 1063).
+pub fn run_daemon_work() -> std::result::Result<(), String> {
     let report = run_preflight_checks();
     if !report.passed {
         return Err(format!("preflight failed: {:?}", report.checks));
@@ -86,7 +91,11 @@ fn run_loop() -> std::result::Result<(), String> {
         .map_err(|error| error.to_string())?;
 
     loop {
-        let summary = execute_all(GuardAction::Guard);
+        if service_host::stop_requested() {
+            break;
+        }
+
+        let summary = run_maintenance_cycle();
         let message = if summary.errors.is_empty() {
             None
         } else {
@@ -94,15 +103,25 @@ fn run_loop() -> std::result::Result<(), String> {
         };
 
         let _ = store_daemon_snapshot(summary.statuses.clone(), message);
-        std::thread::sleep(Duration::from_secs(45));
+
+        for _ in 0..45 {
+            if service_host::stop_requested() {
+                return Ok(());
+            }
+            std::thread::sleep(Duration::from_secs(1));
+        }
     }
+    Ok(())
 }
 
 fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let command = parse_args();
 
     let result = match command {
-        Command::Run => run_loop(),
+        Command::Run => match service_host::enter_dispatcher() {
+            DispatcherOutcome::Console => run_daemon_work(),
+            DispatcherOutcome::ServiceStopped => Ok(()),
+        },
         Command::Once => run_once_cycle(),
         Command::Snapshot => match load_daemon_snapshot() {
             Ok(Some(snapshot)) => {
@@ -113,7 +132,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
                 Ok(())
             }
             Ok(None) => {
-                println!("{{}}",);
+                println!("null");
                 Ok(())
             }
             Err(error) => Err(error.to_string()),

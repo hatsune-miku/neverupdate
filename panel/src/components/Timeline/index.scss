@@ -15,6 +15,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   flex-shrink: 0;
 
   h3 {
@@ -23,6 +24,19 @@
     font-weight: 700;
     color: var(--nu-sumi);
   }
+}
+
+.tl-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.tl-clear {
+  flex-shrink: 0;
+  font-size: 12px;
+  padding: 4px 10px;
 }
 
 .tl-count {

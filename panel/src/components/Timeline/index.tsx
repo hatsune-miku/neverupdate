@@ -3,7 +3,9 @@ import type { HistoryEntry } from '@/types'
 import './index.scss'
 
 interface TimelineProps {
+  busy: boolean
   history: HistoryEntry[]
+  onClear: () => void
 }
 
 function formatTime(value: string): string {
@@ -17,15 +19,25 @@ function formatDate(value: string): string {
 const ActionLabels: Record<string, string> = {
   guard: '阻断',
   release: '放开',
-  repair: '修复',
+  repair: '阻断',
 }
 
-export function Timeline({ history }: TimelineProps) {
+export function Timeline({ busy, history, onClear }: TimelineProps) {
   return (
     <section className="tl">
       <header className="tl-header">
-        <h3>操作记录</h3>
-        <span className="tl-count">{history.length}</span>
+        <div className="tl-header-left">
+          <h3>操作记录</h3>
+          <span className="tl-count">{history.length}</span>
+        </div>
+        <button
+          className="nu-btn nu-btn-ghost tl-clear"
+          disabled={busy || history.length === 0}
+          type="button"
+          onClick={onClear}
+        >
+          清空
+        </button>
       </header>
 
       <div className="tl-scroll">

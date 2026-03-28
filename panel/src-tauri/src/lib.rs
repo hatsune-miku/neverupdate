@@ -1,11 +1,12 @@
 use std::error::Error;
 
 use nu_core::{
-    daemon_service_exists, execute_all, execute_guard_action, list_guard_points,
-    load_daemon_snapshot, query_guard_states, read_history, register_daemon_service,
+    clear_history, clear_interceptions, daemon_service_exists, execute_all, execute_guard_action,
+    list_guard_points, load_daemon_snapshot, query_guard_states, read_history, read_interceptions,
+    register_daemon_service,
     reregister_daemon_service, run_extreme_mode, run_preflight_checks, start_daemon_service,
     stop_daemon_service, unregister_daemon_service, GuardAction, GuardPointDefinition,
-    GuardPointStatus, GuardSummary, HistoryEntry, PreflightReport,
+    GuardPointStatus, GuardSummary, HistoryEntry, InterceptionEntry, PreflightReport,
 };
 use tauri::{Manager, Runtime};
 
@@ -40,6 +41,21 @@ fn execute_all_cmd(action: GuardAction) -> GuardSummary {
 #[tauri::command]
 fn read_history_cmd(limit: usize) -> Result<Vec<HistoryEntry>, String> {
     read_history(limit).map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn clear_history_cmd() -> Result<(), String> {
+    clear_history().map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn read_interceptions_cmd(limit: usize) -> Result<Vec<InterceptionEntry>, String> {
+    read_interceptions(limit).map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn clear_interceptions_cmd() -> Result<(), String> {
+    clear_interceptions().map_err(|error| error.to_string())
 }
 
 #[tauri::command]
@@ -93,34 +109,46 @@ fn resolve_bundled_daemon_path<R: Runtime>(
 }
 
 #[tauri::command]
-fn daemon_service_register<R: Runtime>(app: tauri::AppHandle<R>) -> Result<bool, String> {
+async fn daemon_service_register<R: Runtime>(app: tauri::AppHandle<R>) -> Result<bool, String> {
     let daemon_path = resolve_bundled_daemon_path(&app)?;
-    register_daemon_service(&daemon_path.to_string_lossy()).map_err(|error| error.to_string())?;
+    let path = daemon_path.to_string_lossy().into_owned();
+    tauri::async_runtime::spawn_blocking(move || register_daemon_service(&path).map_err(|e| e.to_string()))
+        .await
+        .map_err(|e| format!("join: {e}"))??;
     Ok(true)
 }
 
 #[tauri::command]
-fn daemon_service_reregister<R: Runtime>(app: tauri::AppHandle<R>) -> Result<bool, String> {
+async fn daemon_service_reregister<R: Runtime>(app: tauri::AppHandle<R>) -> Result<bool, String> {
     let daemon_path = resolve_bundled_daemon_path(&app)?;
-    reregister_daemon_service(&daemon_path.to_string_lossy()).map_err(|error| error.to_string())?;
+    let path = daemon_path.to_string_lossy().into_owned();
+    tauri::async_runtime::spawn_blocking(move || reregister_daemon_service(&path).map_err(|e| e.to_string()))
+        .await
+        .map_err(|e| format!("join: {e}"))??;
     Ok(true)
 }
 
 #[tauri::command]
-fn daemon_service_start() -> Result<bool, String> {
-    start_daemon_service().map_err(|error| error.to_string())?;
+async fn daemon_service_start() -> Result<bool, String> {
+    tauri::async_runtime::spawn_blocking(|| start_daemon_service().map_err(|e| e.to_string()))
+        .await
+        .map_err(|e| format!("join: {e}"))??;
     Ok(true)
 }
 
 #[tauri::command]
-fn daemon_service_stop() -> Result<bool, String> {
-    stop_daemon_service().map_err(|error| error.to_string())?;
+async fn daemon_service_stop() -> Result<bool, String> {
+    tauri::async_runtime::spawn_blocking(|| stop_daemon_service().map_err(|e| e.to_string()))
+        .await
+        .map_err(|e| format!("join: {e}"))??;
     Ok(true)
 }
 
 #[tauri::command]
-fn daemon_service_unregister() -> Result<bool, String> {
-    unregister_daemon_service().map_err(|error| error.to_string())?;
+async fn daemon_service_unregister() -> Result<bool, String> {
+    tauri::async_runtime::spawn_blocking(|| unregister_daemon_service().map_err(|e| e.to_string()))
+        .await
+        .map_err(|e| format!("join: {e}"))??;
     Ok(true)
 }
 
@@ -164,6 +192,9 @@ pub fn run() {
             execute_guard_action_cmd,
             execute_all_cmd,
             read_history_cmd,
+            clear_history_cmd,
+            read_interceptions_cmd,
+            clear_interceptions_cmd,
             daemon_snapshot_cmd,
             daemon_service_register,
             daemon_service_reregister,

@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
 import { bridge } from '@/bridge'
-import type { DaemonSnapshot, GuardAction, GuardPointDefinition, GuardPointStatus, GuardSummary, HistoryEntry, PreflightReport } from '@/types'
+import type { DaemonSnapshot, GuardAction, GuardPointDefinition, GuardPointStatus, GuardSummary, HistoryEntry, InterceptionEntry, PreflightReport } from '@/types'
 
 interface AppState {
   loading: boolean
@@ -13,6 +13,7 @@ interface AppState {
   points: GuardPointDefinition[]
   statuses: GuardPointStatus[]
   history: HistoryEntry[]
+  interceptions: InterceptionEntry[]
   daemonSnapshot: DaemonSnapshot | null
 
   bootstrap: () => Promise<void>
@@ -28,6 +29,7 @@ interface AppState {
   unregisterService: () => Promise<void>
 
   runExtremeMode: () => Promise<void>
+  clearHistory: () => Promise<void>
 }
 
 const RISK_KEY = 'neverupdate-risk-accepted'
@@ -54,6 +56,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   points: [],
   statuses: [],
   history: [],
+  interceptions: [],
   daemonSnapshot: null,
 
   bootstrap: async function () {
@@ -63,7 +66,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       bridge.runPreflightChecks().then((preflight) => set({ preflight })),
       bridge.listGuardPoints().then((points) => set({ points })),
       bridge.queryGuardStates().then((statuses) => set({ statuses })),
-      bridge.readHistory(200).then((history) => set({ history })),
+      bridge.readHistory(500).then((history) => set({ history })),
+      bridge.readInterceptions(500).then((interceptions) => set({ interceptions })),
       bridge.daemonSnapshot().then((daemonSnapshot) => set({ daemonSnapshot })),
     ]).catch((error) => {
       set({ lastError: String(error) })
@@ -79,9 +83,15 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   refresh: async function () {
     await withBusy(set, async function () {
-      const [preflight, statuses, history, daemonSnapshot] = await Promise.all([bridge.runPreflightChecks(), bridge.queryGuardStates(), bridge.readHistory(200), bridge.daemonSnapshot()])
+      const [preflight, statuses, history, interceptions, daemonSnapshot] = await Promise.all([
+        bridge.runPreflightChecks(),
+        bridge.queryGuardStates(),
+        bridge.readHistory(500),
+        bridge.readInterceptions(500),
+        bridge.daemonSnapshot(),
+      ])
 
-      set({ preflight, statuses, history, daemonSnapshot })
+      set({ preflight, statuses, history, interceptions, daemonSnapshot })
     })
   },
 
@@ -92,8 +102,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       const statuses = old.map((item) => (item.id === updated.id ? updated : item))
       set({ statuses })
 
-      const history = await bridge.readHistory(200)
-      set({ history })
+      const [history, interceptions] = await Promise.all([bridge.readHistory(500), bridge.readInterceptions(500)])
+      set({ history, interceptions })
     })
   },
 
@@ -104,8 +114,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       const statuses = await bridge.queryGuardStates()
       set({ statuses })
 
-      const history = await bridge.readHistory(200)
-      set({ history })
+      const [history, interceptions] = await Promise.all([bridge.readHistory(500), bridge.readInterceptions(500)])
+      set({ history, interceptions })
 
       if (summary.errors.length > 0) {
         set({ lastError: summary.errors.join(' | ') })
@@ -157,8 +167,15 @@ export const useAppStore = create<AppState>((set, get) => ({
     await withBusy(set, async function () {
       await bridge.runExtremeMode()
       const statuses = await bridge.queryGuardStates()
-      const history = await bridge.readHistory(200)
-      set({ statuses, history })
+      const [history, interceptions] = await Promise.all([bridge.readHistory(500), bridge.readInterceptions(500)])
+      set({ statuses, history, interceptions })
+    })
+  },
+
+  clearHistory: async function () {
+    await withBusy(set, async function () {
+      await bridge.clearHistory()
+      set({ history: [] })
     })
   },
 }))

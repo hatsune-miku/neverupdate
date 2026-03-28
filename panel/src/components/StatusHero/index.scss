@@ -115,6 +115,21 @@
   color: var(--nu-sumi-mute);
 }
 
+.status-hero-metric-guarded {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--nu-wakaba-deep);
+  font-weight: 600;
+}
+
+.status-hero-check {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--nu-wakaba);
+}
+
 .status-hero-sep {
   width: 3px;
   height: 3px;

@@ -13,6 +13,7 @@ interface DaemonControlProps {
 export function DaemonControl({ busy, snapshot, onRegisterOrReregister, onToggleRunning, onUnregister }: DaemonControlProps) {
   const runtime = snapshot?.runtime
   const running = runtime?.running || false
+  const installed = runtime?.service_registered || false
   const heartbeat = snapshot?.timestamp ? new Date(snapshot.timestamp).toLocaleTimeString() : '--:--'
 
   return (
@@ -31,8 +32,8 @@ export function DaemonControl({ busy, snapshot, onRegisterOrReregister, onToggle
           <dd className="nu-mono">{runtime?.service_name || 'NeverUpdateDaemon'}</dd>
         </div>
         <div>
-          <dt>注册状态</dt>
-          <dd>{runtime?.service_registered ? '已注册' : '未注册'}</dd>
+          <dt>安装状态</dt>
+          <dd>{runtime?.service_registered ? '已安装' : '未安装'}</dd>
         </div>
         <div>
           <dt>最近心跳</dt>
@@ -41,15 +42,19 @@ export function DaemonControl({ busy, snapshot, onRegisterOrReregister, onToggle
       </dl>
 
       <div className="daemon-ctrl-actions">
-        <button className="nu-btn nu-btn-primary" disabled={busy} type="button" onClick={function () { onToggleRunning(running) }}>
-          {running ? '停止服务' : '启动服务'}
-        </button>
+        {installed && (
+          <button className="nu-btn nu-btn-primary" disabled={busy} type="button" onClick={function () { onToggleRunning(running) }}>
+            {running ? '停止服务' : '启动服务'}
+          </button>
+        )}
         <button className="nu-btn nu-btn-ghost" disabled={busy} type="button" onClick={onRegisterOrReregister}>
-          注册
+          {installed ? '重新安装' : '安装服务'}
         </button>
-        <button className="nu-btn nu-btn-danger" disabled={busy} type="button" onClick={onUnregister}>
-          卸载
-        </button>
+        {installed && (
+          <button className="nu-btn nu-btn-danger" disabled={busy} type="button" onClick={onUnregister}>
+            卸载服务
+          </button>
+        )}
       </div>
     </section>
   )

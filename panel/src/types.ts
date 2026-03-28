@@ -38,6 +38,14 @@ export interface HistoryEntry {
   message?: string
 }
 
+export interface InterceptionEntry {
+  point_id: string
+  behavior: string
+  blocked: boolean
+  timestamp: string
+  message?: string
+}
+
 export interface DaemonRuntimeStatus {
   running: boolean
   service_registered: boolean

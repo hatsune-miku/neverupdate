@@ -1,16 +1,14 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 
 import { DaemonControl } from '@/components/DaemonControl'
+import { AdditionalFeatures } from '@/components/AdditionalFeatures'
 import { Diagnostics } from '@/components/Diagnostics'
 import { GuardMatrix } from '@/components/GuardMatrix'
 import { RiskGate } from '@/components/RiskGate'
 import { StatusHero } from '@/components/StatusHero'
-import { Timeline } from '@/components/Timeline'
 import { useAppStore } from '@/store'
 
 import './App.scss'
-
-const EXTREME_POINT_ID = 'extreme_mode'
 
 export default function App() {
   const {
@@ -22,17 +20,20 @@ export default function App() {
     points,
     statuses,
     history,
+    interceptions,
     daemonSnapshot,
     bootstrap,
     acceptRisk,
     refresh,
     executePoint,
     executeAll,
+    registerService,
     reregisterService,
     startService,
     stopService,
     unregisterService,
     runExtremeMode,
+    clearHistory,
   } = useAppStore()
 
   const preflightOk = preflight?.passed === true
@@ -42,15 +43,6 @@ export default function App() {
       bootstrap()
     },
     [bootstrap],
-  )
-
-  const breachedCount = useMemo(
-    function () {
-      return statuses.filter(function (s) {
-        return s.breached
-      }).length
-    },
-    [statuses],
   )
 
   if (!riskAccepted) {
@@ -87,10 +79,6 @@ export default function App() {
             points={points}
             statuses={statuses}
             onAction={function (pointId, action) {
-              if (pointId === EXTREME_POINT_ID) {
-                runExtremeMode()
-                return
-              }
               executePoint(pointId, action)
             }}
           />
@@ -100,7 +88,9 @@ export default function App() {
           <DaemonControl
             busy={busy || loading}
             snapshot={daemonSnapshot}
-            onRegisterOrReregister={reregisterService}
+            onRegisterOrReregister={
+              daemonSnapshot?.runtime.service_registered ? reregisterService : registerService
+            }
             onToggleRunning={function (running) {
               if (running) {
                 stopService()
@@ -110,7 +100,13 @@ export default function App() {
             }}
             onUnregister={unregisterService}
           />
-          <Timeline history={history} />
+          <AdditionalFeatures
+            busy={busy || loading}
+            history={history}
+            interceptions={interceptions}
+            onClearHistory={clearHistory}
+            onRunExtremeMode={runExtremeMode}
+          />
         </aside>
       </div>
     </main>

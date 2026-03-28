@@ -66,7 +66,15 @@ export function StatusHero({ loading, busy, preflight, statuses, daemonSnapshot,
       <div className="status-hero-info">
         <h2 className="status-hero-title">{statusText}</h2>
         <div className="status-hero-metrics">
-          <span>{guardedCount} 阻断中</span>
+          <span className="status-hero-metric-guarded">
+            <svg className="status-hero-check" viewBox="0 0 16 16" aria-hidden>
+              <path
+                fill="currentColor"
+                d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 1 1 1.06-1.06l2.72 2.72 6.72-6.72a.75.75 0 0 1 1.06 0Z"
+              />
+            </svg>
+            {guardedCount} 阻断中
+          </span>
           <span className="status-hero-sep" />
           <span>{breachedCount} 失守</span>
           <span className="status-hero-sep" />
@@ -80,9 +88,6 @@ export function StatusHero({ loading, busy, preflight, statuses, daemonSnapshot,
         </button>
         <button className="nu-btn nu-btn-ghost" disabled={disabled} type="button" onClick={function () { onExecuteAll('release') }}>
           全部放开
-        </button>
-        <button className="nu-btn nu-btn-danger" disabled={disabled} type="button" onClick={function () { onExecuteAll('repair') }}>
-          全部修复
         </button>
       </div>
     </section>

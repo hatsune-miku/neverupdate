@@ -3,23 +3,22 @@ use std::process::Command;
 use crate::error::{NuError, Result};
 use crate::guards::service_guard;
 use crate::pathing::software_distribution_path;
-use crate::state::{load_state, save_state};
+use crate::state::PersistedState;
+use crate::ti_service::TiService;
 
-pub fn run_extreme_mode() -> Result<()> {
-    let mut state = load_state()?;
-    service_guard::extreme_disable_all_services(&mut state)?;
-    save_state(&state)?;
+pub fn run_extreme_mode(state: &mut PersistedState, ti: &TiService) -> Result<()> {
+    service_guard::extreme_disable_all_services(state, ti);
 
     let target = software_distribution_path();
     if target.exists() {
         if target.is_dir() {
-            std::fs::remove_dir_all(&target)?;
+            ti.remove_dir_all(&target)?;
         } else {
-            std::fs::remove_file(&target)?;
+            ti.remove_file(&target)?;
         }
     }
 
-    std::fs::write(
+    ti.write_file(
         &target,
         b"NeverUpdate keeps this path unavailable for Windows Update",
     )?;

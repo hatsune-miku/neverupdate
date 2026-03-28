@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 
 import type { GuardAction, GuardPointDefinition, GuardPointStatus } from '@/types'
 
@@ -10,8 +10,6 @@ interface GuardMatrixProps {
   busy: boolean
   onAction: (pointId: string, action: GuardAction) => void
 }
-
-const EXTREME_POINT_ID = 'extreme_mode'
 
 interface ActionDescriptor {
   action: GuardAction
@@ -27,16 +25,9 @@ function findStatus(statuses: GuardPointStatus[], pointId: string): GuardPointSt
   )
 }
 
-function resolveAction(pointId: string, status: GuardPointStatus | null, extremeArmed: boolean): ActionDescriptor {
-  if (pointId === EXTREME_POINT_ID) {
-    if (extremeArmed) {
-      return { action: 'guard', label: '确认执行', tone: 'danger' }
-    }
-    return { action: 'guard', label: '执行', tone: 'danger' }
-  }
-
+function resolveAction(status: GuardPointStatus | null): ActionDescriptor {
   if (status?.breached) {
-    return { action: 'repair', label: '修复', tone: 'danger' }
+    return { action: 'guard', label: '阻断', tone: 'primary' }
   }
   if (status?.guarded) {
     return { action: 'release', label: '放开', tone: 'ghost' }
@@ -45,42 +36,24 @@ function resolveAction(pointId: string, status: GuardPointStatus | null, extreme
 }
 
 export function GuardMatrix({ points, statuses, busy, onAction }: GuardMatrixProps) {
-  const [extremeArmed, setExtremeArmed] = useState(false)
-
   const sorted = useMemo(
     function () {
-      const normal = points.filter(function (p) {
-        return p.id !== EXTREME_POINT_ID
+      return points.filter(function (p) {
+        return p.id !== 'extreme_mode'
       })
-      const extreme = points.filter(function (p) {
-        return p.id === EXTREME_POINT_ID
-      })
-      return [...normal, ...extreme]
     },
     [points],
   )
 
   function handleAction(pointId: string, action: GuardAction) {
-    if (pointId !== EXTREME_POINT_ID) {
-      onAction(pointId, action)
-      return
-    }
-    if (!extremeArmed) {
-      setExtremeArmed(true)
-      window.setTimeout(function () {
-        setExtremeArmed(false)
-      }, 8000)
-      return
-    }
     onAction(pointId, action)
-    setExtremeArmed(false)
   }
 
   return (
     <div className="guard-matrix">
       <header className="guard-matrix-header">
         <h3>检查点</h3>
-        <span className="guard-matrix-count">{statuses.length} 个检查点</span>
+        <span className="guard-matrix-count">{sorted.length} 个检查点</span>
       </header>
 
       <div className="guard-matrix-list">
@@ -88,20 +61,34 @@ export function GuardMatrix({ points, statuses, busy, onAction }: GuardMatrixPro
           const status = findStatus(statuses, point.id)
           const guarded = status?.guarded || false
           const breached = status?.breached || false
-          const extreme = point.id === EXTREME_POINT_ID
-          const desc = resolveAction(point.id, status, extremeArmed)
+          const desc = resolveAction(status)
 
-          const rowClass = ['guard-row', guarded ? 'guarded' : 'released', breached ? 'breached' : '', extreme ? 'extreme' : ''].filter(Boolean).join(' ')
+          const rowClass = ['guard-row', guarded ? 'guarded' : 'released', breached ? 'breached' : ''].filter(Boolean).join(' ')
 
-          const tagLabel = extreme ? '高危' : breached ? '失守了！' : guarded ? '阻断中' : '已放开'
-          const tagTone = extreme ? 'kurenai' : breached ? 'kurenai' : guarded ? 'pink' : 'dim'
+          const tagLabel = breached ? '失守了！' : guarded ? '阻断中' : '已放开'
+          const tagTone = breached ? 'kurenai' : guarded ? 'wakaba' : 'dim'
+          const showGuardOkTag = guarded
 
           return (
             <article key={point.id} className={rowClass}>
               <div className="guard-row-body">
                 <div className="guard-row-top">
                   <h4>{point.title}</h4>
-                  <span className={`guard-row-tag ${tagTone}`}>{tagLabel}</span>
+                  <span className={`guard-row-tag ${tagTone}`}>
+                    {showGuardOkTag ? (
+                      <>
+                        <svg className="guard-row-tag-icon" viewBox="0 0 16 16" aria-hidden>
+                          <path
+                            fill="currentColor"
+                            d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 1 1 1.06-1.06l2.72 2.72 6.72-6.72a.75.75 0 0 1 1.06 0Z"
+                          />
+                        </svg>
+                        阻断中
+                      </>
+                    ) : (
+                      tagLabel
+                    )}
+                  </span>
                 </div>
                 <p className="guard-row-desc">{point.description}</p>
                 <div className="guard-row-meta nu-mono">

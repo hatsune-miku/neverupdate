@@ -11,3 +11,7 @@ path = "src/main.rs"
 nu_core = { path = "../core" }
 pico-args = "0.5"
 serde_json = "1.0"
+windows-sys = { version = "0.59", features = [
+  "Win32_Foundation",
+  "Win32_System_Services",
+] }
