@@ -526,6 +526,7 @@ UpdateToast           (fixed 定位，条件渲染)
 - 安装模式: `basicUi` (NSIS)
 - 前端通过 Zustand store 管理更新状态机: `idle → checking → ready/latest/error → downloading → relaunch`
 - 自动检测到更新时在右下角显示 toast；手动检查在 Settings 页面
+- 当然，有关闭自动更新的选项，并且不会偷偷开启
 
 ---
 
