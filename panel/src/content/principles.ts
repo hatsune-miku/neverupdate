@@ -5,7 +5,7 @@ export interface GuardPrinciple {
 
 const PRINCIPLES: Record<string, GuardPrinciple> = {
   service_watchdog: {
-    title: '更新干扰服务',
+    title: '干扰更新服务',
     markdown: [
       '### 这个阻断点会做什么',
       '- 将 `WaaSMedicSvc`、`UsoSvc`、`uhssvc` 的启动类型改为禁用。',

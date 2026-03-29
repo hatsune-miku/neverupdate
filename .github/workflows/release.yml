@@ -53,6 +53,18 @@ jobs:
           mkdir -p panel/src-tauri/bin
           cp target/release/neverupdate-daemon.exe panel/src-tauri/bin/neverupdate-daemon.exe
 
+      - name: Save Rust cache
+        if: success() && steps.cache-rust-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          key: ${{ steps.cache-rust-restore.outputs.cache-primary-key }}
+          path: |
+            ~/.cargo/bin
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target
+
       - uses: tauri-apps/tauri-action@v0.6.0
         id: tauri
         env:
@@ -74,15 +86,3 @@ jobs:
           gh release upload "v${{ steps.tauri.outputs.appVersion }}" "target/release/neverupdate-daemon.exe" --clobber
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Save Rust cache
-        if: success() && steps.cache-rust-restore.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          key: ${{ steps.cache-rust-restore.outputs.cache-primary-key }}
-          path: |
-            ~/.cargo/bin
-            ~/.cargo/registry/index
-            ~/.cargo/registry/cache
-            ~/.cargo/git/db
-            target

@@ -19,7 +19,7 @@ impl GuardPoint for ServiceGuard {
     }
 
     fn title(&self) -> &'static str {
-        "更新干扰服务"
+        "干扰更新服务"
     }
 
     fn description(&self) -> &'static str {
@@ -103,7 +103,10 @@ fn check_single_service(name: &str) -> (bool, String) {
 
     (
         guarded,
-        format!("{name}: Start={n_start}, Prefixed={}", img.starts_with(DISABLE_PREFIX)),
+        format!(
+            "{name}: Start={n_start}, Prefixed={}",
+            img.starts_with(DISABLE_PREFIX)
+        ),
     )
 }
 
@@ -114,12 +117,18 @@ fn guard_single_service(name: &str, state: &mut PersistedState, ti: &TiService) 
     let key = ti.open_key(&service_key_path(name), true)?;
 
     let n_start: u32 = key.get_value("Start").unwrap_or(3);
-    state.service_start_backup.entry(name.to_string()).or_insert(n_start);
+    state
+        .service_start_backup
+        .entry(name.to_string())
+        .or_insert(n_start);
     key.set_value("Start", &4u32)?;
 
     let img: String = key.get_value("ImagePath").unwrap_or_default();
     if !img.is_empty() && !img.starts_with(DISABLE_PREFIX) {
-        state.service_image_path_backup.entry(name.to_string()).or_insert(img.clone());
+        state
+            .service_image_path_backup
+            .entry(name.to_string())
+            .or_insert(img.clone());
         key.set_value("ImagePath", &format!("{DISABLE_PREFIX}{img}"))?;
     }
     Ok(())
