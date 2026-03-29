@@ -16,7 +16,7 @@ tauri-plugin-updater = "~2.9.0"
 
 [build-dependencies]
 tauri-build = { version = "2.5.3", features = [] }
-winresource = "0.1"
+embed-manifest = "1"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-updater = "~2.9.0"
