@@ -5,6 +5,12 @@
   -webkit-font-smoothing: antialiased;
 }
 
+:root.nu-disable-theme-transition *,
+:root.nu-disable-theme-transition *::before,
+:root.nu-disable-theme-transition *::after {
+  transition: none !important;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -76,12 +82,13 @@ input {
 }
 
 .nu-btn-primary {
-  border: none;
-  color: var(--nu-yuki);
-  background: var(--nu-pink);
+  border-color: var(--nu-btn-primary-border);
+  color: var(--nu-btn-primary-text);
+  background: var(--nu-btn-primary-bg);
 
   &:not(:disabled):hover {
-    background: var(--nu-pink-deep);
+    background: var(--nu-btn-primary-hover);
+    border-color: var(--nu-btn-primary-border);
   }
 }
 

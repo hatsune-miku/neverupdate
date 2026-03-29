@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import ReactMarkdown from 'react-markdown'
 
@@ -157,6 +157,24 @@ export function AdditionalFeatures({ busy, history, interceptions, onClearHistor
     setExtremeStep2(false)
     setStoreAck(false)
   }
+
+  useEffect(
+    function () {
+      if (!modal) {
+        return
+      }
+      function handleKeyDown(event: KeyboardEvent) {
+        if (event.key === 'Escape') {
+          closeModal()
+        }
+      }
+      window.addEventListener('keydown', handleKeyDown)
+      return function () {
+        window.removeEventListener('keydown', handleKeyDown)
+      }
+    },
+    [modal],
+  )
 
   async function confirmExtreme() {
     if (!extremeStep2) {

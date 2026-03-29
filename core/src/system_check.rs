@@ -174,7 +174,7 @@ pub fn run_preflight_checks() -> PreflightReport {
     let b_ti = ti_result.is_ok();
     checks.push(PreflightCheck {
         id: String::from("trusted_installer"),
-        title: String::from("TrustedInstaller 权限可用"),
+        title: String::from("窃取 TrustedInstaller 权限"),
         passed: b_ti,
         detail: match ti_result {
             Ok(()) => String::from("TI impersonation ok"),

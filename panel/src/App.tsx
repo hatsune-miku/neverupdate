@@ -1,11 +1,11 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 
-import { DaemonControl } from '@/components/DaemonControl'
 import { AdditionalFeatures } from '@/components/AdditionalFeatures'
+import { DaemonControl } from '@/components/DaemonControl'
 import { Diagnostics } from '@/components/Diagnostics'
-import { Settings } from '@/components/Settings'
 import { GuardMatrix } from '@/components/GuardMatrix'
 import { RiskGate } from '@/components/RiskGate'
+import { Settings } from '@/components/Settings'
 import { StatusHero } from '@/components/StatusHero'
 import { UpdateToast } from '@/components/UpdateToast'
 import { useAppStore } from '@/store'
@@ -40,39 +40,62 @@ export default function App() {
     clearInterceptions,
     checkForUpdates,
     updaterCheckEnabled,
+    updateAvailable,
+    updateStatus,
   } = useAppStore()
   const [showDiagnostics, setShowDiagnostics] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
-  const [theme, setTheme] = useState<'light' | 'dark'>(function () {
-    return localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light'
-  })
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => (localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light'))
 
   const preflightOk = preflight?.passed === true
 
-  useEffect(
-    function () {
-      bootstrap()
-    },
-    [bootstrap],
-  )
+  useEffect(() => {
+    bootstrap()
+  }, [bootstrap])
 
-  useEffect(
-    function () {
-      document.documentElement.setAttribute('data-theme', theme)
-      localStorage.setItem(THEME_KEY, theme)
-    },
-    [theme],
-  )
+  useEffect(() => {
+    const root = document.documentElement
+    root.classList.add('nu-disable-theme-transition')
+    root.setAttribute('data-theme', theme)
+    localStorage.setItem(THEME_KEY, theme)
 
-  useEffect(
-    function () {
-      if (!riskAccepted || !updaterCheckEnabled) {
-        return
+    let raf2 = 0
+    const raf1 = window.requestAnimationFrame(() => {
+      raf2 = window.requestAnimationFrame(() => {
+        root.classList.remove('nu-disable-theme-transition')
+      })
+    })
+
+    return () => {
+      window.cancelAnimationFrame(raf1)
+      if (raf2) {
+        window.cancelAnimationFrame(raf2)
       }
-      void checkForUpdates({ fromAuto: true })
-    },
-    [riskAccepted, updaterCheckEnabled, checkForUpdates],
-  )
+      root.classList.remove('nu-disable-theme-transition')
+    }
+  }, [theme])
+
+  useEffect(() => {
+    if (!riskAccepted || !updaterCheckEnabled) {
+      return
+    }
+    void checkForUpdates({ fromAuto: true })
+  }, [riskAccepted, updaterCheckEnabled, checkForUpdates])
+
+  useEffect(() => {
+    if (!showSettings) {
+      return
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowSettings(false)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [showSettings])
 
   if (!riskAccepted) {
     return <RiskGate onAccept={acceptRisk} />
@@ -82,7 +105,7 @@ export default function App() {
   if (showSettings) {
     shell = (
       <Settings
-        onBack={function () {
+        onBack={() => {
           setShowSettings(false)
         }}
       />
@@ -96,7 +119,7 @@ export default function App() {
         onRefresh={refresh}
         onBack={
           preflightOk
-            ? function () {
+            ? () => {
                 setShowDiagnostics(false)
               }
             : undefined
@@ -114,7 +137,7 @@ export default function App() {
             <button
               className="nu-cmd-badge"
               type="button"
-              onClick={function () {
+              onClick={() => {
                 setShowDiagnostics(true)
               }}
             >
@@ -124,7 +147,7 @@ export default function App() {
             <button
               className="nu-icon-btn nu-cmd-toolbar-icon"
               type="button"
-              onClick={function () {
+              onClick={() => {
                 setShowSettings(true)
               }}
               aria-label="设置"
@@ -135,7 +158,7 @@ export default function App() {
             <button
               className="nu-icon-btn nu-cmd-toolbar-icon"
               type="button"
-              onClick={function () {
+              onClick={() => {
                 setTheme(theme === 'dark' ? 'light' : 'dark')
               }}
               aria-label="切换暗色模式"
@@ -156,7 +179,7 @@ export default function App() {
               busy={busy || loading}
               points={points}
               statuses={statuses}
-              onAction={function (pointId, action) {
+              onAction={(pointId, action) => {
                 executePoint(pointId, action)
               }}
             />
@@ -167,7 +190,7 @@ export default function App() {
               busy={busy || loading}
               snapshot={daemonSnapshot}
               onRegister={registerService}
-              onToggleRunning={function (running) {
+              onToggleRunning={(running) => {
                 if (running) {
                   stopService()
                   return
@@ -193,7 +216,20 @@ export default function App() {
   return (
     <>
       {shell}
-      {!showSettings ? <UpdateToast /> : null}
+      {!showSettings ? (
+        <UpdateToast
+          onOpenSettings={() => {
+            setShowSettings(true)
+            if (!updaterCheckEnabled) {
+              return
+            }
+            if (updateStatus === 'checking' || updateStatus === 'downloading' || updateAvailable) {
+              return
+            }
+            void checkForUpdates()
+          }}
+        />
+      ) : null}
     </>
   )
 }

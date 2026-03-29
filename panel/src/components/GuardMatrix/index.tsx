@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { getGuardPrinciple } from '@/content/principles'
 import type { GuardAction, GuardPointDefinition, GuardPointStatus } from '@/types'
@@ -54,6 +54,24 @@ export function GuardMatrix({ points, statuses, busy, onAction }: GuardMatrixPro
   }
 
   const principle = principlePointId ? getGuardPrinciple(principlePointId) : null
+
+  useEffect(
+    function () {
+      if (!principlePointId) {
+        return
+      }
+      function handleKeyDown(event: KeyboardEvent) {
+        if (event.key === 'Escape') {
+          setPrinciplePointId(null)
+        }
+      }
+      window.addEventListener('keydown', handleKeyDown)
+      return function () {
+        window.removeEventListener('keydown', handleKeyDown)
+      }
+    },
+    [principlePointId],
+  )
 
   return (
     <div className="guard-matrix">
