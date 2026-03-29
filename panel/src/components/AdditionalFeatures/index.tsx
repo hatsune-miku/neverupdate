@@ -12,10 +12,13 @@ interface AdditionalFeaturesProps {
   history: HistoryEntry[]
   interceptions: InterceptionEntry[]
   onClearHistory: () => void
+  onClearInterceptions: () => void
   onRunExtremeMode: () => void
 }
 
 type ModalKind = 'history' | 'interception' | 'extreme' | null
+
+const MAX_RECORD_ITEMS = 500
 
 const ACTION_LABELS: Record<string, string> = {
   guard: '阻断',
@@ -118,16 +121,28 @@ function ModalShell({ title, onClose, children }: { title: string; onClose: () =
   )
 }
 
-export function AdditionalFeatures({ busy, history, interceptions, onClearHistory, onRunExtremeMode }: AdditionalFeaturesProps) {
+export function AdditionalFeatures({ busy, history, interceptions, onClearHistory, onClearInterceptions, onRunExtremeMode }: AdditionalFeaturesProps) {
   const [modal, setModal] = useState<ModalKind>(null)
   const [extremeStep2, setExtremeStep2] = useState(false)
   const [storeAck, setStoreAck] = useState(false)
+  const visibleHistory = useMemo(
+    function () {
+      return history.slice(0, MAX_RECORD_ITEMS)
+    },
+    [history],
+  )
+  const visibleInterceptions = useMemo(
+    function () {
+      return interceptions.slice(0, MAX_RECORD_ITEMS)
+    },
+    [interceptions],
+  )
 
   const interceptionCount = useMemo(
     function () {
-      return interceptions.length
+      return visibleInterceptions.length
     },
-    [interceptions],
+    [visibleInterceptions],
   )
   const extremePrinciple = getGuardPrinciple('extreme_mode')
 
@@ -195,12 +210,12 @@ export function AdditionalFeatures({ busy, history, interceptions, onClearHistor
       {modal === 'history' ? (
         <ModalShell title="操作记录（最新 500 条）" onClose={closeModal}>
           <div className="af-modal-toolbar">
-            <span>共 {history.length} 条</span>
-            <button className="nu-btn nu-btn-ghost" disabled={busy || history.length === 0} type="button" onClick={onClearHistory}>
+            <span>共 {visibleHistory.length} 条</span>
+            <button className="nu-btn nu-btn-ghost" disabled={busy || visibleHistory.length === 0} type="button" onClick={onClearHistory}>
               清空记录
             </button>
           </div>
-          {history.length === 0 ? (
+          {visibleHistory.length === 0 ? (
             <p className="af-empty">暂无记录</p>
           ) : (
             <>
@@ -212,7 +227,7 @@ export function AdditionalFeatures({ busy, history, interceptions, onClearHistor
                 <span>#</span>
               </div>
               <VirtualList
-                items={history}
+                items={visibleHistory}
                 rowHeight={44}
                 height={420}
                 renderRow={function (item, index, style) {
@@ -225,11 +240,14 @@ export function AdditionalFeatures({ busy, history, interceptions, onClearHistor
       ) : null}
 
       {modal === 'interception' ? (
-        <ModalShell title="拦截记录" onClose={closeModal}>
+        <ModalShell title="拦截记录（最新 500 条）" onClose={closeModal}>
           <div className="af-modal-toolbar">
             <span>已拦截 {interceptionCount} 次更新行为</span>
+            <button className="nu-btn nu-btn-ghost" disabled={busy || visibleInterceptions.length === 0} type="button" onClick={onClearInterceptions}>
+              清空记录
+            </button>
           </div>
-          {interceptions.length === 0 ? (
+          {visibleInterceptions.length === 0 ? (
             <p className="af-empty">暂无拦截记录</p>
           ) : (
             <>
@@ -239,7 +257,7 @@ export function AdditionalFeatures({ busy, history, interceptions, onClearHistor
                 <span>结果</span>
               </div>
               <VirtualList
-                items={interceptions}
+                items={visibleInterceptions}
                 rowHeight={44}
                 height={420}
                 renderRow={function (item, _index, style) {

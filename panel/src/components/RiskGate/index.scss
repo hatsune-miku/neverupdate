@@ -6,7 +6,7 @@
   justify-content: center;
   padding: 24px;
   background: var(--nu-kinu);
-  animation: gate-fade 600ms var(--nu-ease) both;
+  animation: gate-fade 300ms var(--nu-ease) both;
 }
 
 .risk-gate-card {
@@ -18,7 +18,7 @@
   border-radius: 24px;
   background: var(--nu-yuki);
   border: 1px solid var(--nu-border-default);
-  animation: card-rise 500ms var(--nu-ease) 150ms both;
+  animation: card-rise 250ms var(--nu-ease) 75ms both;
 
   h1 {
     margin: 16px 0 0;
@@ -72,11 +72,11 @@
   line-height: 1.7;
   color: var(--nu-sumi);
   opacity: 0;
-  animation: clause-reveal 400ms var(--nu-ease) both;
+  animation: clause-reveal 200ms var(--nu-ease) both;
 
   @for $i from 1 through 8 {
     &:nth-child(#{$i}) {
-      animation-delay: #{300 + $i * 100}ms;
+      animation-delay: #{150 + $i * 50}ms;
     }
   }
 }

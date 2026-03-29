@@ -1,9 +1,9 @@
 import { create } from 'zustand'
-import { check } from '@tauri-apps/plugin-updater'
-import { relaunch } from '@tauri-apps/plugin-process'
 
 import { bridge } from '@/bridge'
 import type { DaemonSnapshot, GuardAction, GuardPointDefinition, GuardPointStatus, GuardSummary, HistoryEntry, InterceptionEntry, PreflightReport } from '@/types'
+import { relaunch } from '@tauri-apps/plugin-process'
+import { check } from '@tauri-apps/plugin-updater'
 
 interface AppState {
   loading: boolean
@@ -22,6 +22,8 @@ interface AppState {
   updateMessage: string
   updateDownloaded: number
   updateTotal: number | null
+  updaterCheckEnabled: boolean
+  updateToastVisible: boolean
 
   bootstrap: () => Promise<void>
   acceptRisk: () => void
@@ -37,11 +39,22 @@ interface AppState {
 
   runExtremeMode: () => Promise<void>
   clearHistory: () => Promise<void>
-  checkForUpdates: () => Promise<void>
+  clearInterceptions: () => Promise<void>
+  checkForUpdates: (opts?: { fromAuto?: boolean }) => Promise<void>
   installUpdate: () => Promise<void>
+  setUpdaterCheckEnabled: (enabled: boolean) => void
+  dismissUpdateToast: () => void
 }
 
 const RISK_KEY = 'neverupdate-risk-accepted'
+const UPDATER_CHECK_KEY = 'neverupdate-updater-check'
+
+function readUpdaterCheckEnabled() {
+  if (typeof localStorage === 'undefined') {
+    return true
+  }
+  return localStorage.getItem(UPDATER_CHECK_KEY) !== '0'
+}
 
 function withBusy<T>(set: any, fn: () => Promise<T>) {
   set({ busy: true, lastError: null })
@@ -72,6 +85,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   updateMessage: '',
   updateDownloaded: 0,
   updateTotal: null,
+  updaterCheckEnabled: readUpdaterCheckEnabled(),
+  updateToastVisible: false,
 
   bootstrap: async function () {
     set({ loading: true, lastError: null })
@@ -193,7 +208,42 @@ export const useAppStore = create<AppState>((set, get) => ({
     })
   },
 
-  checkForUpdates: async function () {
+  clearInterceptions: async function () {
+    await withBusy(set, async function () {
+      await bridge.clearInterceptions()
+      set({ interceptions: [] })
+    })
+  },
+
+  setUpdaterCheckEnabled: function (enabled: boolean) {
+    localStorage.setItem(UPDATER_CHECK_KEY, enabled ? '1' : '0')
+    if (!enabled) {
+      set({
+        updaterCheckEnabled: false,
+        updateAvailable: null,
+        updateStatus: 'idle',
+        updateMessage: '',
+        updateDownloaded: 0,
+        updateTotal: null,
+        updateToastVisible: false,
+      })
+      return
+    }
+    set({ updaterCheckEnabled: true })
+  },
+
+  dismissUpdateToast: function () {
+    set({ updateToastVisible: false })
+  },
+
+  checkForUpdates: async function (opts?: { fromAuto?: boolean }) {
+    if (!get().updaterCheckEnabled) {
+      return
+    }
+    const fromAuto = opts?.fromAuto === true
+    if (!fromAuto) {
+      set({ updateToastVisible: false })
+    }
     set({ updateStatus: 'checking', updateMessage: '' })
     try {
       const update = await check()
@@ -202,6 +252,7 @@ export const useAppStore = create<AppState>((set, get) => ({
           updateAvailable: update,
           updateStatus: 'ready',
           updateMessage: `发现新版本 ${update.version}`,
+          ...(fromAuto ? { updateToastVisible: true } : { updateToastVisible: false }),
         })
         return
       }
@@ -209,16 +260,21 @@ export const useAppStore = create<AppState>((set, get) => ({
         updateAvailable: null,
         updateStatus: 'latest',
         updateMessage: '已经是最新版本',
+        updateToastVisible: false,
       })
     } catch (error) {
       set({
         updateStatus: 'error',
         updateMessage: error instanceof Error ? error.message : '检查更新失败',
+        updateToastVisible: false,
       })
     }
   },
 
   installUpdate: async function () {
+    if (!get().updaterCheckEnabled) {
+      return
+    }
     const update = get().updateAvailable
     if (!update) {
       return

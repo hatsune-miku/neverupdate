@@ -6,7 +6,7 @@
   justify-content: center;
   padding: 24px;
   background: var(--nu-kinu);
-  animation: diag-fade 500ms var(--nu-ease) both;
+  animation: diag-fade 150ms var(--nu-ease) both;
 }
 
 .diag-card {
@@ -18,7 +18,7 @@
   border-radius: 24px;
   background: var(--nu-yuki);
   border: 1px solid var(--nu-border-default);
-  animation: diag-rise 500ms var(--nu-ease) 100ms both;
+  animation: diag-rise 250ms var(--nu-ease) 50ms both;
 
   h1 {
     margin: 0;

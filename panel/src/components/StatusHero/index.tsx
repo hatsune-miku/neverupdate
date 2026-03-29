@@ -11,9 +11,10 @@ interface StatusHeroProps {
   statuses: GuardPointStatus[]
   daemonSnapshot: DaemonSnapshot | null
   onExecuteAll: (action: GuardAction) => void
+  onRefresh: () => void
 }
 
-export function StatusHero({ loading, busy, preflight, statuses, daemonSnapshot, onExecuteAll }: StatusHeroProps) {
+export function StatusHero({ loading, busy, preflight, statuses, daemonSnapshot, onExecuteAll, onRefresh }: StatusHeroProps) {
   const guardedCount = useMemo(function () {
     return statuses.filter(function (s) {
       return s.guarded
@@ -88,6 +89,9 @@ export function StatusHero({ loading, busy, preflight, statuses, daemonSnapshot,
         </button>
         <button className="nu-btn nu-btn-ghost" disabled={disabled} type="button" onClick={function () { onExecuteAll('release') }}>
           全部放开
+        </button>
+        <button className="nu-btn nu-btn-ghost" disabled={disabled} type="button" onClick={onRefresh}>
+          刷新数据
         </button>
       </div>
     </section>

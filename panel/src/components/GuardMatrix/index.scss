@@ -23,13 +23,7 @@
   transition:
     border-color 220ms var(--nu-ease),
     transform 220ms var(--nu-ease);
-  animation: row-enter 350ms var(--nu-ease) both;
-
-  @for $i from 1 through 12 {
-    &:nth-child(#{$i}) {
-      animation-delay: #{$i * 40}ms;
-    }
-  }
+  animation: row-enter 150ms var(--nu-ease) both;
 
   &::before {
     content: '';
