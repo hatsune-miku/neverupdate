@@ -11,8 +11,10 @@ use nu_core::{
 use tauri::{Manager, Runtime};
 
 #[tauri::command]
-fn run_preflight_checks_cmd() -> PreflightReport {
-    run_preflight_checks()
+async fn run_preflight_checks_cmd() -> Result<PreflightReport, String> {
+    tauri::async_runtime::spawn_blocking(run_preflight_checks)
+        .await
+        .map_err(|e| format!("join: {e}"))
 }
 
 #[tauri::command]
@@ -21,46 +23,66 @@ fn list_guard_points_cmd() -> Vec<GuardPointDefinition> {
 }
 
 #[tauri::command]
-fn query_guard_states_cmd() -> Result<Vec<GuardPointStatus>, String> {
-    query_guard_states().map_err(|error| error.to_string())
+async fn query_guard_states_cmd() -> Result<Vec<GuardPointStatus>, String> {
+    tauri::async_runtime::spawn_blocking(|| query_guard_states().map_err(|e| e.to_string()))
+        .await
+        .map_err(|e| format!("join: {e}"))?
 }
 
 #[tauri::command]
-fn execute_guard_action_cmd(
+async fn execute_guard_action_cmd(
     point_id: String,
     action: GuardAction,
 ) -> Result<GuardPointStatus, String> {
-    execute_guard_action(&point_id, action).map_err(|error| error.to_string())
+    tauri::async_runtime::spawn_blocking(move || {
+        execute_guard_action(&point_id, action).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| format!("join: {e}"))?
 }
 
 #[tauri::command]
-fn execute_all_cmd(action: GuardAction) -> GuardSummary {
-    execute_all(action)
+async fn execute_all_cmd(action: GuardAction) -> Result<GuardSummary, String> {
+    tauri::async_runtime::spawn_blocking(move || execute_all(action))
+        .await
+        .map_err(|e| format!("join: {e}"))
 }
 
 #[tauri::command]
-fn read_history_cmd(limit: usize) -> Result<Vec<HistoryEntry>, String> {
-    read_history(limit).map_err(|error| error.to_string())
+async fn read_history_cmd(limit: usize) -> Result<Vec<HistoryEntry>, String> {
+    tauri::async_runtime::spawn_blocking(move || read_history(limit).map_err(|e| e.to_string()))
+        .await
+        .map_err(|e| format!("join: {e}"))?
 }
 
 #[tauri::command]
-fn clear_history_cmd() -> Result<(), String> {
-    clear_history().map_err(|error| error.to_string())
+async fn clear_history_cmd() -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(|| clear_history().map_err(|e| e.to_string()))
+        .await
+        .map_err(|e| format!("join: {e}"))?
 }
 
 #[tauri::command]
-fn read_interceptions_cmd(limit: usize) -> Result<Vec<InterceptionEntry>, String> {
-    read_interceptions(limit).map_err(|error| error.to_string())
+async fn read_interceptions_cmd(limit: usize) -> Result<Vec<InterceptionEntry>, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        read_interceptions(limit).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| format!("join: {e}"))?
 }
 
 #[tauri::command]
-fn clear_interceptions_cmd() -> Result<(), String> {
-    clear_interceptions().map_err(|error| error.to_string())
+async fn clear_interceptions_cmd() -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(|| clear_interceptions().map_err(|e| e.to_string()))
+        .await
+        .map_err(|e| format!("join: {e}"))?
 }
 
 #[tauri::command]
-fn daemon_snapshot_cmd() -> Result<Option<nu_core::DaemonSnapshot>, String> {
-    load_daemon_snapshot().map_err(|error| error.to_string())
+async fn daemon_snapshot_cmd() -> Result<Option<nu_core::DaemonSnapshot>, String> {
+    tauri::async_runtime::spawn_blocking(|| load_daemon_snapshot().map_err(|e| e.to_string()))
+        .await
+        .map_err(|e| format!("join: {e}"))?
 }
 
 fn resolve_bundled_daemon_path<R: Runtime>(
@@ -153,8 +175,10 @@ async fn daemon_service_unregister() -> Result<bool, String> {
 }
 
 #[tauri::command]
-fn run_extreme_mode_cmd() -> Result<bool, String> {
-    run_extreme_mode().map_err(|error| error.to_string())?;
+async fn run_extreme_mode_cmd() -> Result<bool, String> {
+    tauri::async_runtime::spawn_blocking(|| run_extreme_mode().map_err(|e| e.to_string()))
+        .await
+        .map_err(|e| format!("join: {e}"))??;
     Ok(true)
 }
 
