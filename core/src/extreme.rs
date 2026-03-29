@@ -1,3 +1,4 @@
+use std::os::windows::process::CommandExt;
 use std::process::Command;
 
 use crate::error::{NuError, Result};
@@ -5,6 +6,8 @@ use crate::guards::service_guard;
 use crate::pathing::software_distribution_path;
 use crate::state::PersistedState;
 use crate::ti_service::TiService;
+
+const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 
 pub fn run_extreme_mode(state: &mut PersistedState, ti: &TiService) -> Result<()> {
     service_guard::extreme_disable_all_services(state, ti);
@@ -34,7 +37,10 @@ pub fn run_extreme_mode(state: &mut PersistedState, ti: &TiService) -> Result<()
 }
 
 fn run_icacls(args: &[&str]) -> Result<()> {
-    let output = Command::new("icacls").args(args).output()?;
+    let output = Command::new("icacls")
+        .args(args)
+        .creation_flags(CREATE_NO_WINDOW)
+        .output()?;
     if output.status.success() {
         return Ok(());
     }
